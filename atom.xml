@@ -6,7 +6,7 @@
   <link href="https://la-ks.us.kg/atom.xml" rel="self"/>
   
   <link href="https://la-ks.us.kg/"/>
-  <updated>2025-02-02T12:57:37.647Z</updated>
+  <updated>2025-04-12T03:40:28.125Z</updated>
   <id>https://la-ks.us.kg/</id>
   
   <author>
@@ -17,13 +17,36 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>添加侧边栏电子钟</title>
+    <link href="https://la-ks.us.kg/posts/0.html"/>
+    <id>https://la-ks.us.kg/posts/0.html</id>
+    <published>2025-04-12T03:33:50.000Z</published>
+    <updated>2025-04-12T03:40:28.125Z</updated>
+    
+    <content type="html"><![CDATA[<p>‘’’python<br> test’’’</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;‘’’python&lt;br&gt; test’’’&lt;/p&gt;
+</summary>
+      
+    
+    
+    
+    
+    <category term="hexo,butterfly,美化" scheme="https://la-ks.us.kg/tags/hexo-butterfly-%E7%BE%8E%E5%8C%96/"/>
+    
+  </entry>
+  
+  <entry>
     <title>关于本站</title>
     <link href="https://la-ks.us.kg/posts/0.html"/>
     <id>https://la-ks.us.kg/posts/0.html</id>
     <published>2025-02-02T12:00:00.000Z</published>
-    <updated>2025-02-02T12:57:37.647Z</updated>
+    <updated>2025-04-12T03:29:05.040Z</updated>
     
-    <content type="html"><![CDATA[<h1 id="关于本站"><a href="#关于本站" class="headerlink" title="关于本站"></a>关于本站</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本站使用 <a href="https://hexo.io/">Hexo</a> 搭建，主题为 <a href="https://github.com/jerryc127/hexo-theme-butterfly">butterfly</a>。，托管于 <a href="https://github.com/liang-kai-shui/liang-kai-shui.github.io">GitHub</a>。</p><h2 id="感谢"><a href="#感谢" class="headerlink" title="感谢"></a>感谢</h2><ul><li><a href="https://github.com/jerryc127/hexo-theme-butterfly">butterfly</a></li><li><a href="https://hexo.io/">Hexo</a></li></ul>]]></content>
+    <content type="html"><![CDATA[<h1 id="关于本站"><a href="#关于本站" class="headerlink" title="关于本站"></a>关于本站</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本站使用 <a href="https://hexo.io/">Hexo</a> 搭建，主题为 <a href="https://github.com/jerryc127/hexo-theme-butterfly">butterfly</a>。托管于 <a href="https://github.com/liang-kai-shui/liang-kai-shui.github.io">GitHub</a>。</p><h2 id="感谢"><a href="#感谢" class="headerlink" title="感谢"></a>感谢</h2><ul><li><a href="https://github.com/jerryc127/hexo-theme-butterfly">butterfly</a></li><li><a href="https://hexo.io/">Hexo</a></li></ul>]]></content>
     
     
       

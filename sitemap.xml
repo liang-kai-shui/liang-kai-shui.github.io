@@ -4,7 +4,16 @@
   <url>
     <loc>https://la-ks.us.kg/posts/0.html</loc>
     
-    <lastmod>2025-02-02</lastmod>
+    <lastmod>2025-04-12</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://la-ks.us.kg/posts/0.html</loc>
+    
+    <lastmod>2025-04-12</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -66,6 +75,13 @@
   
   <url>
     <loc>https://la-ks.us.kg/tags/%E7%AB%99%E7%82%B9/</loc>
+    <lastmod>2025-04-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://la-ks.us.kg/tags/hexo-butterfly-%E7%BE%8E%E5%8C%96/</loc>
     <lastmod>2025-04-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
