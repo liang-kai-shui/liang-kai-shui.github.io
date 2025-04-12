@@ -6,7 +6,7 @@
   <link href="https://la-ks.us.kg/atom.xml" rel="self"/>
   
   <link href="https://la-ks.us.kg/"/>
-  <updated>2025-04-12T03:40:28.125Z</updated>
+  <updated>2025-04-12T03:59:59.721Z</updated>
   <id>https://la-ks.us.kg/</id>
   
   <author>
@@ -21,21 +21,20 @@
     <link href="https://la-ks.us.kg/posts/0.html"/>
     <id>https://la-ks.us.kg/posts/0.html</id>
     <published>2025-04-12T03:33:50.000Z</published>
-    <updated>2025-04-12T03:40:28.125Z</updated>
+    <updated>2025-04-12T03:59:59.721Z</updated>
     
-    <content type="html"><![CDATA[<p>‘’’python<br> test’’’</p>]]></content>
+    <content type="html"><![CDATA[<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;hello world&#x27;</span>)</span><br></pre></td></tr></table></figure>]]></content>
     
     
       
       
-    <summary type="html">&lt;p&gt;‘’’python&lt;br&gt; test’’’&lt;/p&gt;
-</summary>
+    <summary type="html">&lt;figure class=&quot;highlight python&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span cl</summary>
       
     
     
     
     
-    <category term="hexo,butterfly,美化" scheme="https://la-ks.us.kg/tags/hexo-butterfly-%E7%BE%8E%E5%8C%96/"/>
+    <category term="hexo，butterfly，美化" scheme="https://la-ks.us.kg/tags/hexo%EF%BC%8Cbutterfly%EF%BC%8C%E7%BE%8E%E5%8C%96/"/>
     
   </entry>
   
