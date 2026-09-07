@@ -6,7 +6,8 @@
 
 ## 站点地址
 
-- 主站（Vercel）：<https://liang-kai-shui-github-io.vercel.app>
+- 主站(该域名已弃用) : https://la-ks.dpdns.org
+- 副站（Vercel）：<https://liang-kai-shui-github-io.vercel.app>
 - GitHub Pages：<https://liang-kai-shui.github.io>
 
 ## 栏目
