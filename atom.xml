@@ -3,11 +3,11 @@
   <title>摸鱼小窝</title>
   
   <subtitle>分享技术，资源的个人博客</subtitle>
-  <link href="https://la-ks.us.kg/atom.xml" rel="self"/>
+  <link href="https://lksme.dpdns.org/atom.xml" rel="self"/>
   
-  <link href="https://la-ks.us.kg/"/>
+  <link href="https://lksme.dpdns.org/"/>
   <updated>2025-04-12T04:24:18.147Z</updated>
-  <id>https://la-ks.us.kg/</id>
+  <id>https://lksme.dpdns.org/</id>
   
   <author>
     <name>凉开水</name>
@@ -18,8 +18,8 @@
   
   <entry>
     <title>添加侧边栏电子钟</title>
-    <link href="https://la-ks.us.kg/posts/4ce3e802.html"/>
-    <id>https://la-ks.us.kg/posts/4ce3e802.html</id>
+    <link href="https://lksme.dpdns.org/posts/4ce3e802.html"/>
+    <id>https://lksme.dpdns.org/posts/4ce3e802.html</id>
     <published>2025-04-12T03:33:50.000Z</published>
     <updated>2025-04-12T04:24:18.147Z</updated>
     
@@ -35,14 +35,14 @@
     
     
     
-    <category term="hexo，butterfly，美化" scheme="https://la-ks.us.kg/tags/hexo%EF%BC%8Cbutterfly%EF%BC%8C%E7%BE%8E%E5%8C%96/"/>
+    <category term="hexo，butterfly，美化" scheme="https://lksme.dpdns.org/tags/hexo%EF%BC%8Cbutterfly%EF%BC%8C%E7%BE%8E%E5%8C%96/"/>
     
   </entry>
   
   <entry>
     <title>关于本站</title>
-    <link href="https://la-ks.us.kg/posts/8b8a8c83.html"/>
-    <id>https://la-ks.us.kg/posts/8b8a8c83.html</id>
+    <link href="https://lksme.dpdns.org/posts/8b8a8c83.html"/>
+    <id>https://lksme.dpdns.org/posts/8b8a8c83.html</id>
     <published>2025-02-02T12:00:00.000Z</published>
     <updated>2025-04-12T04:24:23.332Z</updated>
     
@@ -57,7 +57,7 @@
     
     
     
-    <category term="站点" scheme="https://la-ks.us.kg/tags/%E7%AB%99%E7%82%B9/"/>
+    <category term="站点" scheme="https://lksme.dpdns.org/tags/%E7%AB%99%E7%82%B9/"/>
     
   </entry>
   
