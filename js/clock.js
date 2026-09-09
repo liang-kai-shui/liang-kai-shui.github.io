@@ -2,15 +2,20 @@
  * 侧边栏电子钟 —— 本地定制版
  *
  * 为什么自己写：
- *   插件自带的 clock.min.js 把 IP 定位接口硬编码成了 api.nsmao.net，
- *   该域名已注销（DNS 都解析不到），于是永远走 fallback —— 无论访客在哪，
- *   天气都固定显示 clock_rectangle（长沙芙蓉区）。
+ *   插件自带的 clock.min.js 把 IP 定位接口硬编码成 api.nsmao.net —— 该域名已注销，
+ *   于是永远走 fallback，无论访客在哪都显示 clock_rectangle 里的固定城市。
+ *
+ * 为什么不能直接调高德：
+ *   高德 IP 定位接口明确写着「仅支持 IPV4，不支持国外 IP 解析」，而 restapi.amap.com
+ *   同时有 AAAA 记录，访客浏览器普遍优先走 IPv6 → 高德返回空 → 又退回固定城市。
+ *   所以必须先拿到访客的 IPv4，再带 ip 参数调高德。
  *
  * 定位顺序：
- *   1. 配置 electric_clock.default_rectangle: true  → 直接用 clock_rectangle
- *   2. 高德 IP 定位（国内访客最准，用 gaud_map_key，接口允许跨域）
- *   3. ipapi.co（国外访客兜底）
- *   4. 兜底 clock_rectangle
+ *   1. 配置 electric_clock.default_rectangle: true → 直接用 clock_rectangle
+ *   2. 高德 IP 定位（先取访客 IPv4，再 ?ip=<ipv4>；拿不到 IPv4 就直接让高德看请求 IP）
+ *   3. ipinfo.io（返回 loc="纬度,经度" + 城市）
+ *   4. api.ipapi.is（返回 lat/lon + 城市）
+ *   5. 兜底 clock_rectangle
  *
  * 依赖的全局变量由 hexo-butterfly-clock-anzhiyu 的注入脚本提供：
  *   qweather_key / qweather_api_host / clock_rectangle /
@@ -30,29 +35,52 @@
     fixed: typeof clock_default_rectangle_enable !== 'undefined' && clock_default_rectangle_enable === 'true'
   }
 
-  function getJSON(url, timeout) {
+  function request(url, timeout, asText) {
     return new Promise(function (resolve, reject) {
-      var timer = setTimeout(function () { reject(new Error('timeout')) }, timeout || 6000)
+      var timer = setTimeout(function () { reject(new Error('timeout ' + url)) }, timeout || 6000)
       fetch(url)
-        .then(function (res) { return res.json() })
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url)
+          return asText ? res.text() : res.json()
+        })
         .then(function (data) { clearTimeout(timer); resolve(data) })
         .catch(function (err) { clearTimeout(timer); reject(err) })
     })
+  }
+  var getJSON = function (url, t) { return request(url, t, false) }
+  var getText = function (url, t) { return request(url, t, true) }
+
+  function isIPv4(s) {
+    return typeof s === 'string' && /^(\d{1,3}\.){3}\d{1,3}$/.test(s.trim())
+  }
+
+  // 只解析 IPv4 的地址，确保拿到的是 IPv4 而不是 IPv6
+  function getVisitorIPv4() {
+    return getText('https://ipv4.icanhazip.com', 5000)
+      .catch(function () {
+        return getText('https://ipv4.ident.me/.json', 5000).then(function (t) {
+          try { return JSON.parse(t).address } catch (e) { return t }
+        })
+      })
+      .then(function (text) {
+        var ip = String(text || '').trim()
+        if (!isIPv4(ip)) throw new Error('拿不到 IPv4：' + ip)
+        return ip
+      })
   }
 
   // 高德返回的 rectangle 是「城市范围」：lng1,lat1;lng2,lat2 → 取中心点
   function centerOfRectangle(rect) {
     if (typeof rect !== 'string' || rect.indexOf(';') < 0) return null
-    var parts = rect.split(';')
-    var p1 = parts[0].split(',')
-    var p2 = parts[1].split(',')
+    var p1 = rect.split(';')[0].split(',')
+    var p2 = rect.split(';')[1].split(',')
     var lng1 = parseFloat(p1[0]), lat1 = parseFloat(p1[1])
     var lng2 = parseFloat(p2[0]), lat2 = parseFloat(p2[1])
     if ([lng1, lat1, lng2, lat2].some(function (n) { return isNaN(n) })) return null
     return { lng: ((lng1 + lng2) / 2).toFixed(6), lat: ((lat1 + lat2) / 2).toFixed(6) }
   }
 
-  // 高德有时把 city 返回成空数组
+  // 高德有时把 city/province 返回成空数组
   function pickName(v, fallback) {
     if (typeof v === 'string' && v) return v
     if (Array.isArray(v) && typeof v[0] === 'string' && v[0]) return v[0]
@@ -60,45 +88,58 @@
   }
 
   function fromAmap() {
-    if (!cfg.amapKey) return Promise.reject(new Error('no amap key'))
-    return getJSON('https://restapi.amap.com/v3/ip?key=' + encodeURIComponent(cfg.amapKey))
+    if (!cfg.amapKey) return Promise.reject(new Error('未配置 gaud_map_key'))
+    var base = 'https://restapi.amap.com/v3/ip?key=' + encodeURIComponent(cfg.amapKey)
+    return getVisitorIPv4()
+      .then(function (ip) { return getJSON(base + '&ip=' + ip) })
+      .catch(function (e) {
+        console.warn('[clock] 取访客 IPv4 失败，改为让高德直接看请求 IP：', e.message)
+        return getJSON(base)
+      })
       .then(function (data) {
         if (data && data.status === '1') {
           var center = centerOfRectangle(data.rectangle)
           var city = pickName(data.city, '') || pickName(data.province, '')
-          if (center && city) return { lng: center.lng, lat: center.lat, city: city }
+          if (center && city) return { lng: center.lng, lat: center.lat, city: city, from: '高德' }
         }
-        throw new Error('amap: ' + JSON.stringify(data))
+        throw new Error('高德返回空：' + JSON.stringify(data))
       })
   }
 
-  function fromIpapiCo() {
-    return getJSON('https://ipapi.co/json/').then(function (data) {
-      if (data && data.latitude && data.longitude) {
-        return { lng: String(data.longitude), lat: String(data.latitude), city: data.city || DEFAULT_CITY }
-      }
-      throw new Error('ipapi.co: no location')
+  function fromIpinfo() {
+    return getJSON('https://ipinfo.io/json').then(function (d) {
+      var loc = (d && d.loc ? String(d.loc).split(',') : null)
+      if (!loc || loc.length !== 2) throw new Error('ipinfo.io 无 loc 字段')
+      return { lat: loc[0], lng: loc[1], city: d.city || DEFAULT_CITY, from: 'ipinfo.io' }
+    })
+  }
+
+  function fromIpapiIs() {
+    return getJSON('https://api.ipapi.is/').then(function (d) {
+      if (!d || d.lat == null || d.lon == null) throw new Error('ipapi.is 无坐标')
+      return { lng: String(d.lon), lat: String(d.lat), city: d.city || DEFAULT_CITY, from: 'ipapi.is' }
     })
   }
 
   function fallbackLocation() {
     var parts = cfg.rectangle.split(',')
-    return Promise.resolve({ lng: parts[0], lat: parts[1], city: DEFAULT_CITY })
+    return Promise.resolve({ lng: parts[0], lat: parts[1], city: DEFAULT_CITY, from: '默认坐标' })
   }
 
   function resolveLocation() {
     if (cfg.fixed) return fallbackLocation()
     return fromAmap()
-      .catch(function (e) { console.warn('[clock] 高德 IP 定位失败，改用 ipapi.co：', e.message); return fromIpapiCo() })
-      .catch(function (e) { console.warn('[clock] ipapi.co 也失败，使用默认坐标：', e.message); return fallbackLocation() })
+      .catch(function (e) { console.warn('[clock] 高德定位失败：', e.message); return fromIpinfo() })
+      .catch(function (e) { console.warn('[clock] ipinfo.io 失败：', e.message); return fromIpapiIs() })
+      .catch(function (e) { console.warn('[clock] ipapi.is 失败：', e.message); return fallbackLocation() })
   }
 
   function fetchWeather(loc) {
     var url = 'https://' + cfg.qweatherHost + '/v7/weather/now?location=' +
       loc.lng + ',' + loc.lat + '&key=' + encodeURIComponent(cfg.qweatherKey)
     return getJSON(url).then(function (data) {
-      if (!data || data.code !== '200') throw new Error('qweather: ' + JSON.stringify(data))
-      return { data: data, city: loc.city }
+      if (!data || data.code !== '200') throw new Error('和风天气返回异常：' + JSON.stringify(data))
+      return { data: data, loc: loc }
     })
   }
 
@@ -163,8 +204,7 @@
       var time = zeroPadding(cd.getHours(), 2) + ':' + zeroPadding(cd.getMinutes(), 2) + ':' + zeroPadding(cd.getSeconds(), 2)
       var date = zeroPadding(cd.getFullYear(), 4) + '-' + zeroPadding(cd.getMonth() + 1, 2) + '-' +
         zeroPadding(cd.getDate(), 2) + ' ' + WEEK[cd.getDay()]
-      var hour = cd.getHours()
-      var ampm = hour > 12 ? ' P M' : ' A M'
+      var ampm = cd.getHours() > 12 ? ' P M' : ' A M'
 
       var t = document.getElementById('card-clock-time')
       var d = document.getElementById('card-clock-clockdate')
@@ -185,7 +225,10 @@
     }
     resolveLocation()
       .then(fetchWeather)
-      .then(function (r) { render(r.data, r.city) })
+      .then(function (r) {
+        console.info('[clock] 定位来源：' + r.loc.from + ' → ' + r.loc.city + '（' + r.loc.lng + ',' + r.loc.lat + '）')
+        render(r.data, r.loc.city)
+      })
       .catch(function (err) { console.error('[clock] 天气数据获取失败：', err) })
   }
 
