@@ -1,4 +1,6 @@
 .loading-img {
-    background: url(/source/img/p18.webp) no-repeat center center;
+    /* 原站这里写的是 /source/img/p18.webp —— 该路径不存在（404），
+       图片实际在 /img/p18.webp，所以加载动画里只显示一个空圆框。 */
+    background: url(/img/p18.webp) no-repeat center center;
     background-size: cover;
 }
