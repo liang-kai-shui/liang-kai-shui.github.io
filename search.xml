@@ -57,6 +57,17 @@
     
     <entry>
       <title></title>
+      <link href="/css/progress_bar.css"/>
+      <url>/css/progress_bar.css</url>
+      
+        <content type="html"><![CDATA[.pace {    -webkit-pointer-events: none;    pointer-events: none;    -webkit-user-select: none;    -moz-user-select: none;    user-select: none;    z-index: 2000;    position: fixed;    margin: auto;    top: 10px;    left: 0;    right: 0;    height: 8px;    border-radius: 8px;    width: 4rem;    background: #eaecf2;    border: 1px #e3e8f7;    overflow: hidden;}.pace-inactive .pace-progress {    opacity: 0;    transition: 0.3s ease-in;}.pace .pace-progress {    -webkit-box-sizing: border-box;    -moz-box-sizing: border-box;    -ms-box-sizing: border-box;    -o-box-sizing: border-box;    box-sizing: border-box;    -webkit-transform: translate3d(0, 0, 0);    -moz-transform: translate3d(0, 0, 0);    -ms-transform: translate3d(0, 0, 0);    -o-transform: translate3d(0, 0, 0);    transform: translate3d(0, 0, 0);    max-width: 200px;    position: absolute;    z-index: 2000;    display: block;    top: 0;    right: 100%;    height: 100%;    width: 100%;    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);    animation: gradient 1.5s ease infinite;    background-size: 200%;}.pace.pace-inactive {    opacity: 0;    transition: 0.3s;    top: -8px;}@keyframes gradient {    0% {        background-position: 0% 50%;    }    50% {        background-position: 100% 50%;    }    100% {        background-position: 0% 50%;    }}]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title></title>
       <link href="/css/custom.css"/>
       <url>/css/custom.css</url>
       
@@ -79,39 +90,6 @@
     
     <entry>
       <title></title>
-      <link href="/css/progress_bar.css"/>
-      <url>/css/progress_bar.css</url>
-      
-        <content type="html"><![CDATA[.pace {    -webkit-pointer-events: none;    pointer-events: none;    -webkit-user-select: none;    -moz-user-select: none;    user-select: none;    z-index: 2000;    position: fixed;    margin: auto;    top: 10px;    left: 0;    right: 0;    height: 8px;    border-radius: 8px;    width: 4rem;    background: #eaecf2;    border: 1px #e3e8f7;    overflow: hidden;}.pace-inactive .pace-progress {    opacity: 0;    transition: 0.3s ease-in;}.pace .pace-progress {    -webkit-box-sizing: border-box;    -moz-box-sizing: border-box;    -ms-box-sizing: border-box;    -o-box-sizing: border-box;    box-sizing: border-box;    -webkit-transform: translate3d(0, 0, 0);    -moz-transform: translate3d(0, 0, 0);    -ms-transform: translate3d(0, 0, 0);    -o-transform: translate3d(0, 0, 0);    transform: translate3d(0, 0, 0);    max-width: 200px;    position: absolute;    z-index: 2000;    display: block;    top: 0;    right: 100%;    height: 100%;    width: 100%;    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);    animation: gradient 1.5s ease infinite;    background-size: 200%;}.pace.pace-inactive {    opacity: 0;    transition: 0.3s;    top: -8px;}@keyframes gradient {    0% {        background-position: 0% 50%;    }    50% {        background-position: 100% 50%;    }    100% {        background-position: 0% 50%;    }}]]></content>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title></title>
-      <link href="/music/index.html"/>
-      <url>/music/index.html</url>
-      
-        <content type="html"><![CDATA[]]></content>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title></title>
-      <link href="/img/manifest.json"/>
-      <url>/img/manifest.json</url>
-      
-        <content type="html"><![CDATA[{"name":"摸鱼小窝","short_name":"小窝","theme_color":"#3b70fc","background_color":"#3b70fc","display":"standalone","scope":"/","start_url":"/","icons":[{"src":"/img/siteicon/16.png","sizes":"16x16","type":"image/png"},{"src":"/img/siteicon/32.png","sizes":"32x32","type":"image/png"},{"src":"/img/siteicon/48.png","sizes":"48x48","type":"image/png"},{"src":"/img/siteicon/64.png","sizes":"64x64","type":"image/png"},{"src":"/img/siteicon/128.png","sizes":"128x128","type":"image/png"},{"src":"/img/siteicon/144.png","sizes":"144x144","type":"image/png"},{"src":"/img/siteicon/512.png","sizes":"512x512","type":"image/png"}],"splash_pages":null}]]></content>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title></title>
       <link href="/js/ali_font.js"/>
       <url>/js/ali_font.js</url>
       
@@ -123,10 +101,10 @@
     
     <entry>
       <title></title>
-      <link href="/js/clock.js"/>
-      <url>/js/clock.js</url>
+      <link href="/img/manifest.json"/>
+      <url>/img/manifest.json</url>
       
-        <content type="html"><![CDATA[/*! * 侧边栏电子钟 —— 本地定制版 * * 为什么自己写： *   插件自带的 clock.min.js 把 IP 定位接口硬编码成 api.nsmao.net —— 该域名已注销， *   于是永远走 fallback，无论访客在哪都显示 clock_rectangle 里的固定城市。 * * 为什么不能直接调高德： *   高德 IP 定位接口明确写着「仅支持 IPV4，不支持国外 IP 解析」，而 restapi.amap.com *   同时有 AAAA 记录，访客浏览器普遍优先走 IPv6 → 高德返回空 → 又退回固定城市。 *   所以必须先拿到访客的 IPv4，再带 ip 参数调高德。 * * 定位顺序： *   1. 配置 electric_clock.default_rectangle: true → 直接用 clock_rectangle *   2. 高德 IP 定位（先取访客 IPv4，再 ?ip=<ipv4>；拿不到 IPv4 就直接让高德看请求 IP） *   3. ipinfo.io（返回 loc="纬度,经度" + 城市） *   4. api.ipapi.is（返回 lat/lon + 城市） *   5. 兜底 clock_rectangle * * 依赖的全局变量由 hexo-butterfly-clock-anzhiyu 的注入脚本提供： *   qweather_key / qweather_api_host / clock_rectangle / *   gaud_map_key / clock_default_rectangle_enable */(function () {  'use strict'  var DEFAULT_CITY = '长沙市'  var WEEK = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']  var cfg = {    qweatherKey: typeof qweather_key !== 'undefined' ? qweather_key : '',    qweatherHost: typeof qweather_api_host !== 'undefined' ? qweather_api_host : 'devapi.qweather.com',    rectangle: typeof clock_rectangle !== 'undefined' ? clock_rectangle : '112.982279,28.19409',    amapKey: typeof gaud_map_key !== 'undefined' ? gaud_map_key : '',    fixed: typeof clock_default_rectangle_enable !== 'undefined' && clock_default_rectangle_enable === 'true'  }  function request(url, timeout, asText) {    return new Promise(function (resolve, reject) {      var timer = setTimeout(function () { reject(new Error('timeout ' + url)) }, timeout || 6000)      fetch(url)        .then(function (res) {          if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url)          return asText ? res.text() : res.json()        })        .then(function (data) { clearTimeout(timer); resolve(data) })        .catch(function (err) { clearTimeout(timer); reject(err) })    })  }  var getJSON = function (url, t) { return request(url, t, false) }  var getText = function (url, t) { return request(url, t, true) }  function isIPv4(s) {    return typeof s === 'string' && /^(\d{1,3}\.){3}\d{1,3}$/.test(s.trim())  }  // 只解析 IPv4 的地址，确保拿到的是 IPv4 而不是 IPv6  function getVisitorIPv4() {    return getText('https://ipv4.icanhazip.com', 5000)      .catch(function () {        return getText('https://ipv4.ident.me/.json', 5000).then(function (t) {          try { return JSON.parse(t).address } catch (e) { return t }        })      })      .then(function (text) {        var ip = String(text || '').trim()        if (!isIPv4(ip)) throw new Error('拿不到 IPv4：' + ip)        return ip      })  }  // 高德返回的 rectangle 是「城市范围」：lng1,lat1;lng2,lat2 → 取中心点  function centerOfRectangle(rect) {    if (typeof rect !== 'string' || rect.indexOf(';') < 0) return null    var p1 = rect.split(';')[0].split(',')    var p2 = rect.split(';')[1].split(',')    var lng1 = parseFloat(p1[0]), lat1 = parseFloat(p1[1])    var lng2 = parseFloat(p2[0]), lat2 = parseFloat(p2[1])    if ([lng1, lat1, lng2, lat2].some(function (n) { return isNaN(n) })) return null    return { lng: ((lng1 + lng2) / 2).toFixed(6), lat: ((lat1 + lat2) / 2).toFixed(6) }  }  // 高德有时把 city/province 返回成空数组  function pickName(v, fallback) {    if (typeof v === 'string' && v) return v    if (Array.isArray(v) && typeof v[0] === 'string' && v[0]) return v[0]    return fallback  }  function fromAmap() {    if (!cfg.amapKey) return Promise.reject(new Error('未配置 gaud_map_key'))    var base = 'https://restapi.amap.com/v3/ip?key=' + encodeURIComponent(cfg.amapKey)    return getVisitorIPv4()      .then(function (ip) { return getJSON(base + '&ip=' + ip) })      .catch(function (e) {        console.warn('[clock] 取访客 IPv4 失败，改为让高德直接看请求 IP：', e.message)        return getJSON(base)      })      .then(function (data) {        if (data && data.status === '1') {          var center = centerOfRectangle(data.rectangle)          var city = pickName(data.city, '') || pickName(data.province, '')          if (center && city) return { lng: center.lng, lat: center.lat, city: city, from: '高德' }        }        throw new Error('高德返回空：' + JSON.stringify(data))      })  }  function fromIpinfo() {    return getJSON('https://ipinfo.io/json').then(function (d) {      var loc = (d && d.loc ? String(d.loc).split(',') : null)      if (!loc || loc.length !== 2) throw new Error('ipinfo.io 无 loc 字段')      return { lat: loc[0], lng: loc[1], city: d.city || DEFAULT_CITY, from: 'ipinfo.io' }    })  }  function fromIpapiIs() {    return getJSON('https://api.ipapi.is/').then(function (d) {      if (!d || d.lat == null || d.lon == null) throw new Error('ipapi.is 无坐标')      return { lng: String(d.lon), lat: String(d.lat), city: d.city || DEFAULT_CITY, from: 'ipapi.is' }    })  }  function fallbackLocation() {    var parts = cfg.rectangle.split(',')    return Promise.resolve({ lng: parts[0], lat: parts[1], city: DEFAULT_CITY, from: '默认坐标' })  }  function resolveLocation() {    if (cfg.fixed) return fallbackLocation()    return fromAmap()      .catch(function (e) { console.warn('[clock] 高德定位失败：', e.message); return fromIpinfo() })      .catch(function (e) { console.warn('[clock] ipinfo.io 失败：', e.message); return fromIpapiIs() })      .catch(function (e) { console.warn('[clock] ipapi.is 失败：', e.message); return fallbackLocation() })  }  function fetchWeather(loc) {    var url = 'https://' + cfg.qweatherHost + '/v7/weather/now?location=' +      loc.lng + ',' + loc.lat + '&key=' + encodeURIComponent(cfg.qweatherKey)    return getJSON(url).then(function (data) {      if (!data || data.code !== '200') throw new Error('和风天气返回异常：' + JSON.stringify(data))      return { data: data, loc: loc }    })  }  function zeroPadding(num, digit) {    var zero = ''    for (var i = 0; i < digit; i++) zero += '0'    return (zero + num).slice(-digit)  }  // 天气图标配色（照搬插件原逻辑）  function iconColor(icon) {    switch (icon) {      case '100': return '#fdcc45'      case '101': return '#fe6976'      case '102': case '103': return '#fe7f5b'      case '104': case '150': case '151': case '152': case '153': case '154':      case '800': case '801': case '802': case '803': case '804': case '805':      case '806': case '807': return '#2152d1'      case '300': case '301': case '305': case '306': case '307': case '308':      case '309': case '310': case '311': case '312': case '313': case '314':      case '315': case '316': case '317': case '318': case '350': case '351':      case '399': return '#49b1f5'      case '302': case '303': case '304': return '#fdcc46'      case '400': case '401': case '402': case '403': case '404': case '405':      case '406': case '407': case '408': case '409': case '410': case '456':      case '457': case '499': return '#a3c2dc'      case '500': case '501': case '502': case '503': case '504': case '507':      case '508': case '509': case '510': case '511': case '512': case '513':      case '514': case '515': return '#97acba'      case '900': case '999': return 'red'      case '901': return '#179fff'      default: return '#000'    }  }  function render(info, city) {    var box = document.getElementById('hexo_electric_clock')    if (!box) return    var color = iconColor(info.now.icon)    var loading = document.getElementById('card-clock-loading')    if (loading) loading.innerHTML = ''    box.innerHTML =      '<div class="clock-row">' +        '<span id="card-clock-clockdate" class="card-clock-clockdate"></span>' +        '<span class="card-clock-weather"><i class="qi-' + info.now.icon + '-fill" style="color:' + color + '"></i> ' +          info.now.text + '<span>' + info.now.temp + '</span> ℃</span>' +        '<span class="card-clock-humidity">💧 ' + info.now.humidity + '%</span>' +      '</div>' +      '<div class="clock-row">' +        '<span id="card-clock-time" class="card-clock-time"></span>' +      '</div>' +      '<div class="clock-row">' +        '<span class="card-clock-windDir"> <i class="qi-gale"></i> ' + info.now.windDir + '</span>' +        '<span class="card-clock-location">' + city + '</span>' +        '<span id="card-clock-dackorlight" class="card-clock-dackorlight"></span>' +      '</div>'    function updateTime() {      var cd = new Date()      var time = zeroPadding(cd.getHours(), 2) + ':' + zeroPadding(cd.getMinutes(), 2) + ':' + zeroPadding(cd.getSeconds(), 2)      var date = zeroPadding(cd.getFullYear(), 4) + '-' + zeroPadding(cd.getMonth() + 1, 2) + '-' +        zeroPadding(cd.getDate(), 2) + ' ' + WEEK[cd.getDay()]      var ampm = cd.getHours() > 12 ? ' P M' : ' A M'      var t = document.getElementById('card-clock-time')      var d = document.getElementById('card-clock-clockdate')      var a = document.getElementById('card-clock-dackorlight')      if (t) t.innerHTML = time      if (d) d.innerHTML = date      if (a) a.innerHTML = ampm    }    setInterval(updateTime, 1000)    updateTime()  }  function init() {    if (!cfg.qweatherKey) {      console.error('[clock] 缺少 qweather_key，跳过')      return    }    resolveLocation()      .then(fetchWeather)      .then(function (r) {        console.info('[clock] 定位来源：' + r.loc.from + ' → ' + r.loc.city + '（' + r.loc.lng + ',' + r.loc.lat + '）')        render(r.data, r.loc.city)      })      .catch(function (err) { console.error('[clock] 天气数据获取失败：', err) })  }  if (document.readyState === 'loading') {    document.addEventListener('DOMContentLoaded', init)  } else {    init()  }})()]]></content>
+        <content type="html"><![CDATA[{"name":"摸鱼小窝","short_name":"小窝","theme_color":"#3b70fc","background_color":"#3b70fc","display":"standalone","scope":"/","start_url":"/","icons":[{"src":"/img/siteicon/16.png","sizes":"16x16","type":"image/png"},{"src":"/img/siteicon/32.png","sizes":"32x32","type":"image/png"},{"src":"/img/siteicon/48.png","sizes":"48x48","type":"image/png"},{"src":"/img/siteicon/64.png","sizes":"64x64","type":"image/png"},{"src":"/img/siteicon/128.png","sizes":"128x128","type":"image/png"},{"src":"/img/siteicon/144.png","sizes":"144x144","type":"image/png"},{"src":"/img/siteicon/512.png","sizes":"512x512","type":"image/png"}],"splash_pages":null}]]></content>
       
     </entry>
     
@@ -155,11 +133,11 @@
     
     
     <entry>
-      <title>tags</title>
-      <link href="/tags/index.html"/>
-      <url>/tags/index.html</url>
+      <title></title>
+      <link href="/js/clock.js"/>
+      <url>/js/clock.js</url>
       
-        <content type="html"><![CDATA[]]></content>
+        <content type="html"><![CDATA[/*! * 侧边栏电子钟 —— 本地定制版 * * 为什么自己写： *   插件自带的 clock.min.js 把 IP 定位接口硬编码成 api.nsmao.net —— 该域名已注销， *   于是永远走 fallback，无论访客在哪都显示 clock_rectangle 里的固定城市。 * * 为什么不能直接调高德： *   高德 IP 定位接口明确写着「仅支持 IPV4，不支持国外 IP 解析」，而 restapi.amap.com *   同时有 AAAA 记录，访客浏览器普遍优先走 IPv6 → 高德返回空 → 又退回固定城市。 *   所以必须先拿到访客的 IPv4，再带 ip 参数调高德。 * * 定位顺序： *   1. 配置 electric_clock.default_rectangle: true → 直接用 clock_rectangle *   2. 高德 IP 定位（先取访客 IPv4，再 ?ip=<ipv4>；拿不到 IPv4 就直接让高德看请求 IP） *   3. ipinfo.io（返回 loc="纬度,经度" + 城市） *   4. api.ipapi.is（返回 lat/lon + 城市） *   5. 兜底 clock_rectangle * * 依赖的全局变量由 hexo-butterfly-clock-anzhiyu 的注入脚本提供： *   qweather_key / qweather_api_host / clock_rectangle / *   gaud_map_key / clock_default_rectangle_enable */(function () {  'use strict'  var DEFAULT_CITY = '长沙市'  var WEEK = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']  var cfg = {    qweatherKey: typeof qweather_key !== 'undefined' ? qweather_key : '',    qweatherHost: typeof qweather_api_host !== 'undefined' ? qweather_api_host : 'devapi.qweather.com',    rectangle: typeof clock_rectangle !== 'undefined' ? clock_rectangle : '112.982279,28.19409',    amapKey: typeof gaud_map_key !== 'undefined' ? gaud_map_key : '',    fixed: typeof clock_default_rectangle_enable !== 'undefined' && clock_default_rectangle_enable === 'true'  }  function request(url, timeout, asText) {    return new Promise(function (resolve, reject) {      var timer = setTimeout(function () { reject(new Error('timeout ' + url)) }, timeout || 6000)      fetch(url)        .then(function (res) {          if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url)          return asText ? res.text() : res.json()        })        .then(function (data) { clearTimeout(timer); resolve(data) })        .catch(function (err) { clearTimeout(timer); reject(err) })    })  }  var getJSON = function (url, t) { return request(url, t, false) }  var getText = function (url, t) { return request(url, t, true) }  function isIPv4(s) {    return typeof s === 'string' && /^(\d{1,3}\.){3}\d{1,3}$/.test(s.trim())  }  // 只解析 IPv4 的地址，确保拿到的是 IPv4 而不是 IPv6  function getVisitorIPv4() {    return getText('https://ipv4.icanhazip.com', 5000)      .catch(function () {        return getText('https://ipv4.ident.me/.json', 5000).then(function (t) {          try { return JSON.parse(t).address } catch (e) { return t }        })      })      .then(function (text) {        var ip = String(text || '').trim()        if (!isIPv4(ip)) throw new Error('拿不到 IPv4：' + ip)        return ip      })  }  // 高德返回的 rectangle 是「城市范围」：lng1,lat1;lng2,lat2 → 取中心点  function centerOfRectangle(rect) {    if (typeof rect !== 'string' || rect.indexOf(';') < 0) return null    var p1 = rect.split(';')[0].split(',')    var p2 = rect.split(';')[1].split(',')    var lng1 = parseFloat(p1[0]), lat1 = parseFloat(p1[1])    var lng2 = parseFloat(p2[0]), lat2 = parseFloat(p2[1])    if ([lng1, lat1, lng2, lat2].some(function (n) { return isNaN(n) })) return null    return { lng: ((lng1 + lng2) / 2).toFixed(6), lat: ((lat1 + lat2) / 2).toFixed(6) }  }  // 高德有时把 city/province 返回成空数组  function pickName(v, fallback) {    if (typeof v === 'string' && v) return v    if (Array.isArray(v) && typeof v[0] === 'string' && v[0]) return v[0]    return fallback  }  function fromAmap() {    if (!cfg.amapKey) return Promise.reject(new Error('未配置 gaud_map_key'))    var base = 'https://restapi.amap.com/v3/ip?key=' + encodeURIComponent(cfg.amapKey)    return getVisitorIPv4()      .then(function (ip) { return getJSON(base + '&ip=' + ip) })      .catch(function (e) {        console.warn('[clock] 取访客 IPv4 失败，改为让高德直接看请求 IP：', e.message)        return getJSON(base)      })      .then(function (data) {        if (data && data.status === '1') {          var center = centerOfRectangle(data.rectangle)          var city = pickName(data.city, '') || pickName(data.province, '')          if (center && city) return { lng: center.lng, lat: center.lat, city: city, from: '高德' }        }        throw new Error('高德返回空：' + JSON.stringify(data))      })  }  function fromIpinfo() {    return getJSON('https://ipinfo.io/json').then(function (d) {      var loc = (d && d.loc ? String(d.loc).split(',') : null)      if (!loc || loc.length !== 2) throw new Error('ipinfo.io 无 loc 字段')      return { lat: loc[0], lng: loc[1], city: d.city || DEFAULT_CITY, from: 'ipinfo.io' }    })  }  function fromIpapiIs() {    return getJSON('https://api.ipapi.is/').then(function (d) {      if (!d || d.lat == null || d.lon == null) throw new Error('ipapi.is 无坐标')      return { lng: String(d.lon), lat: String(d.lat), city: d.city || DEFAULT_CITY, from: 'ipapi.is' }    })  }  function fallbackLocation() {    var parts = cfg.rectangle.split(',')    return Promise.resolve({ lng: parts[0], lat: parts[1], city: DEFAULT_CITY, from: '默认坐标' })  }  function resolveLocation() {    if (cfg.fixed) return fallbackLocation()    return fromAmap()      .catch(function (e) { console.warn('[clock] 高德定位失败：', e.message); return fromIpinfo() })      .catch(function (e) { console.warn('[clock] ipinfo.io 失败：', e.message); return fromIpapiIs() })      .catch(function (e) { console.warn('[clock] ipapi.is 失败：', e.message); return fallbackLocation() })  }  function fetchWeather(loc) {    var url = 'https://' + cfg.qweatherHost + '/v7/weather/now?location=' +      loc.lng + ',' + loc.lat + '&key=' + encodeURIComponent(cfg.qweatherKey)    return getJSON(url).then(function (data) {      if (!data || data.code !== '200') throw new Error('和风天气返回异常：' + JSON.stringify(data))      return { data: data, loc: loc }    })  }  function zeroPadding(num, digit) {    var zero = ''    for (var i = 0; i < digit; i++) zero += '0'    return (zero + num).slice(-digit)  }  // 天气图标配色（照搬插件原逻辑）  function iconColor(icon) {    switch (icon) {      case '100': return '#fdcc45'      case '101': return '#fe6976'      case '102': case '103': return '#fe7f5b'      case '104': case '150': case '151': case '152': case '153': case '154':      case '800': case '801': case '802': case '803': case '804': case '805':      case '806': case '807': return '#2152d1'      case '300': case '301': case '305': case '306': case '307': case '308':      case '309': case '310': case '311': case '312': case '313': case '314':      case '315': case '316': case '317': case '318': case '350': case '351':      case '399': return '#49b1f5'      case '302': case '303': case '304': return '#fdcc46'      case '400': case '401': case '402': case '403': case '404': case '405':      case '406': case '407': case '408': case '409': case '410': case '456':      case '457': case '499': return '#a3c2dc'      case '500': case '501': case '502': case '503': case '504': case '507':      case '508': case '509': case '510': case '511': case '512': case '513':      case '514': case '515': return '#97acba'      case '900': case '999': return 'red'      case '901': return '#179fff'      default: return '#000'    }  }  function render(info, city) {    var box = document.getElementById('hexo_electric_clock')    if (!box) return    var color = iconColor(info.now.icon)    var loading = document.getElementById('card-clock-loading')    if (loading) loading.innerHTML = ''    box.innerHTML =      '<div class="clock-row">' +        '<span id="card-clock-clockdate" class="card-clock-clockdate"></span>' +        '<span class="card-clock-weather"><i class="qi-' + info.now.icon + '-fill" style="color:' + color + '"></i> ' +          info.now.text + '<span>' + info.now.temp + '</span> ℃</span>' +        '<span class="card-clock-humidity">💧 ' + info.now.humidity + '%</span>' +      '</div>' +      '<div class="clock-row">' +        '<span id="card-clock-time" class="card-clock-time"></span>' +      '</div>' +      '<div class="clock-row">' +        '<span class="card-clock-windDir"> <i class="qi-gale"></i> ' + info.now.windDir + '</span>' +        '<span class="card-clock-location">' + city + '</span>' +        '<span id="card-clock-dackorlight" class="card-clock-dackorlight"></span>' +      '</div>'    function updateTime() {      var cd = new Date()      var time = zeroPadding(cd.getHours(), 2) + ':' + zeroPadding(cd.getMinutes(), 2) + ':' + zeroPadding(cd.getSeconds(), 2)      var date = zeroPadding(cd.getFullYear(), 4) + '-' + zeroPadding(cd.getMonth() + 1, 2) + '-' +        zeroPadding(cd.getDate(), 2) + ' ' + WEEK[cd.getDay()]      var ampm = cd.getHours() > 12 ? ' P M' : ' A M'      var t = document.getElementById('card-clock-time')      var d = document.getElementById('card-clock-clockdate')      var a = document.getElementById('card-clock-dackorlight')      if (t) t.innerHTML = time      if (d) d.innerHTML = date      if (a) a.innerHTML = ampm    }    setInterval(updateTime, 1000)    updateTime()  }  function init() {    if (!cfg.qweatherKey) {      console.error('[clock] 缺少 qweather_key，跳过')      return    }    resolveLocation()      .then(fetchWeather)      .then(function (r) {        console.info('[clock] 定位来源：' + r.loc.from + ' → ' + r.loc.city + '（' + r.loc.lng + ',' + r.loc.lat + '）')        render(r.data, r.loc.city)      })      .catch(function (err) { console.error('[clock] 天气数据获取失败：', err) })  }  if (document.readyState === 'loading') {    document.addEventListener('DOMContentLoaded', init)  } else {    init()  }})()]]></content>
       
     </entry>
     
@@ -177,6 +155,28 @@
     
     
     <entry>
+      <title>link</title>
+      <link href="/link/index.html"/>
+      <url>/link/index.html</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>tags</title>
+      <link href="/tags/index.html"/>
+      <url>/tags/index.html</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title></title>
       <link href="/js/title-fly.js"/>
       <url>/js/title-fly.js</url>
@@ -188,9 +188,9 @@
     
     
     <entry>
-      <title>link</title>
-      <link href="/link/index.html"/>
-      <url>/link/index.html</url>
+      <title></title>
+      <link href="/music/index.html"/>
+      <url>/music/index.html</url>
       
         <content type="html"><![CDATA[]]></content>
       
