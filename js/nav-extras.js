@@ -6,9 +6,14 @@
  * 为什么放导航栏：主题自带的夜间按钮在右下角那个齿轮里，得先把鼠标移上去才出现，
  * 我自己找都要找一会儿，所以挪到导航栏跟搜索图标并排常显。
  *
- * 切换逻辑直接复用主题的按钮：`#darkmode` 上挂着主题的点击处理（切 data-theme、
- * 显示 Snackbar 提示、把选择写进 localStorage），这里只是替它被点一下，
- * 不再自己维护一份状态，免得两边不一致。
+ * 两个实现上的坑：
+ *   1. 事件要用**委托**绑在 document 上，不能直接绑到那两个元素。
+ *      pjax 站内跳转会替换导航栏那一段 DOM，直接绑在元素上的监听器跟着旧元素一起没了，
+ *      表现就是"首页点得动，点进文章就点不动了"（#rightside 在 pjax 容器外，所以主题自带的
+ *      那个按钮一直是好的，只有我加的这个坏）。
+ *   2. 切换逻辑直接复用主题的按钮：`#darkmode` 上挂着主题的点击处理（切 data-theme、
+ *      弹 Snackbar 提示、把选择写进 localStorage），这里只是替它被点一下，
+ *      不再自己维护一份状态，免得两边不一致。
  *
  * 由 _config.butterfly.yml → inject.bottom 引入。
  */
@@ -49,17 +54,6 @@
     setTimeout(syncIcon, 0)
   }
 
-  function bind (el, handler) {
-    if (!el) return
-    el.addEventListener('click', handler)
-    el.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        handler()
-      }
-    })
-  }
-
   var postsCache = null
 
   function randomPost () {
@@ -91,11 +85,27 @@
       })
   }
 
-  function init () {
-    syncIcon()
-    bind(document.getElementById(TOGGLE_ID), toggleTheme)
-    bind(document.getElementById(RANDOM_ID), randomPost)
+  // 事件委托：pjax 换掉导航栏之后依然有效
+  function closest (target, id) {
+    while (target && target !== document) {
+      if (target.id === id) return target
+      target = target.parentNode
+    }
+    return null
   }
+
+  document.addEventListener('click', function (e) {
+    if (closest(e.target, TOGGLE_ID)) { toggleTheme(); return }
+    if (closest(e.target, RANDOM_ID)) { randomPost() }
+  })
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return
+    if (closest(e.target, TOGGLE_ID)) { e.preventDefault(); toggleTheme(); return }
+    if (closest(e.target, RANDOM_ID)) { e.preventDefault(); randomPost() }
+  })
+
+  function init () { syncIcon() }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)
   else init()
@@ -103,5 +113,6 @@
   // 主题默认按系统/时间自动切（autoChangeMode），pjax 跳转后图标也要跟上
   if (window.btf && window.btf.addGlobalFn) window.btf.addGlobalFn('pjaxComplete', syncIcon, 'lksNav')
   document.addEventListener('pjax:complete', syncIcon)
+
   window.lksNav = { syncIcon: syncIcon, toggle: toggleTheme, random: randomPost, theme: currentTheme }
 })()
