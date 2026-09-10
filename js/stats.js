@@ -18,10 +18,21 @@
 (function () {
   'use strict'
 
-  var CFG = window.LKS_COMMENT || {}
+  // 后端地址由 scripts/inject-client-config.js 全站注入（首页这类没有评论区的页面也有）；
+  // 拿不到 LKS_STATS 就退回老的 LKS_COMMENT
+  var CFG = window.LKS_STATS || window.LKS_COMMENT || {}
   var API = (CFG.api || '').replace(/\/+$/, '')
+  var STAT_IDS = ['busuanzi_value_site_pv', 'busuanzi_value_site_uv', 'busuanzi_value_page_pv']
+
+  // 主题在这几个位置放的是转圈图标（<i class="fa-solid fa-spinner fa-spin">），
+  // 谁都不填就会一直转。所以无论成功还是失败，最后一定要把它们写掉。
+  function settleSpinners (value) {
+    STAT_IDS.forEach(function (id) { fill(id, value) })
+  }
+
   if (!API) {
     console.warn('[stats] 没有配置后端地址（lks_comment.api），统计与反应不启用')
+    settleSpinners('—')
     return
   }
 
@@ -84,14 +95,29 @@
       body: JSON.stringify({ path: path })
     })
       .then(function (data) { fill('busuanzi_value_page_pv', data.views) })
-      .catch(function (err) { console.warn('[stats] 记录浏览失败：', err.message) })
+      .catch(function (err) {
+        console.warn('[stats] 记录浏览失败：', err.message)
+        fill('busuanzi_value_page_pv', '—')
+      })
 
     api('/api/stats')
       .then(function (data) {
         fill('busuanzi_value_site_pv', data.site_pv)
         fill('busuanzi_value_site_uv', data.site_uv)
       })
-      .catch(function (err) { console.warn('[stats] 读取站点统计失败：', err.message) })
+      .catch(function (err) {
+        console.warn('[stats] 读取站点统计失败：', err.message)
+        fill('busuanzi_value_site_pv', '—')
+        fill('busuanzi_value_site_uv', '—')
+      })
+
+    // 兜底：8 秒后如果还停在转圈图标上（接口特别慢或请求被拦），就写个破折号，别一直转
+    setTimeout(function () {
+      STAT_IDS.forEach(function (id) {
+        var el = document.getElementById(id)
+        if (el && el.querySelector && el.querySelector('.fa-spinner')) fill(id, '—')
+      })
+    }, 8000)
   }
 
   /* ------------------------- 文章反应 ------------------------- */
