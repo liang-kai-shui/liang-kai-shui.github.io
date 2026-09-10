@@ -1,0 +1,78 @@
+/*!
+ * 文章反应（点赞）样式
+ * 配色复用 Butterfly 的 CSS 变量，自动跟随夜间模式
+ */
+
+#lks-reactions {
+  margin: 18px 0 6px;
+  text-align: center;
+}
+
+.lks-reactions-tip {
+  font-size: 13px;
+  color: var(--card-meta, #8a8a8a);
+  margin-bottom: 10px;
+}
+
+.lks-reactions-bar {
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.lks-reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(128, 128, 128, 0.28);
+  background: var(--card-bg, transparent);
+  color: var(--font-color, inherit);
+  transition: transform 0.15s, border-color 0.2s, background 0.2s;
+}
+
+.lks-reaction:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--btn-bg, #49b1f5);
+}
+
+.lks-reaction:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.lks-reaction.is-done {
+  border-color: var(--btn-bg, #49b1f5);
+  background: color-mix(in srgb, var(--btn-bg, #49b1f5) 12%, transparent);
+  opacity: 1;
+}
+
+.lks-reaction.is-done .lks-reaction-emoji {
+  animation: lks-pop 0.35s ease;
+}
+
+.lks-reaction-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.lks-reaction-count {
+  font-size: 13px;
+  color: var(--card-meta, #8a8a8a);
+  min-width: 1em;
+}
+
+@keyframes lks-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+@media screen and (max-width: 600px) {
+  .lks-reaction { padding: 5px 10px; font-size: 13px; }
+}

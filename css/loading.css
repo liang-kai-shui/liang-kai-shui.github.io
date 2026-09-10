@@ -1,6 +1,8 @@
 .loading-img {
     /* 原站这里写的是 /source/img/p18.webp —— 该路径不存在（404），
-       图片实际在 /img/p18.webp，所以加载动画里只显示一个空圆框。 */
-    background: url(/img/p18.webp) no-repeat center center;
+       图片实际在 /img/p18.webp，所以加载动画里只显示一个空圆框。
+       另外这个文件本质是 PNG（只是扩展名写成了 webp），已改名成 p18.png，
+       让扩展名和真实格式一致，避免个别浏览器/CDN 按 image/webp 解析失败。 */
+    background: url(/img/p18.png) no-repeat center center;
     background-size: cover;
 }
