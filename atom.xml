@@ -40,9 +40,9 @@
     <category term="折腾记录" scheme="https://lksme.dpdns.org/categories/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/"/>
     
     
-    <category term="hexo" scheme="https://lksme.dpdns.org/tags/hexo/"/>
-    
     <category term="站点" scheme="https://lksme.dpdns.org/tags/%E7%AB%99%E7%82%B9/"/>
+    
+    <category term="hexo" scheme="https://lksme.dpdns.org/tags/hexo/"/>
     
   </entry>
   
