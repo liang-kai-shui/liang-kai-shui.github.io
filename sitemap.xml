@@ -2,15 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://lksme.dpdns.org/img/manifest.json</loc>
-    
-    <lastmod>2026-09-10</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://lksme.dpdns.org/movies/index.html</loc>
     
     <lastmod>2026-09-10</lastmod>
@@ -48,6 +39,15 @@
   
   <url>
     <loc>https://lksme.dpdns.org/categories/index.html</loc>
+    
+    <lastmod>2026-09-10</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://lksme.dpdns.org/img/manifest.json</loc>
     
     <lastmod>2026-09-10</lastmod>
     
