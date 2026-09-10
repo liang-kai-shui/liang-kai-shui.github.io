@@ -1,0 +1,223 @@
+/*!
+ * 摸鱼小窝 · 自建评论样式
+ * 配色尽量复用 Butterfly 的 CSS 变量（--card-bg / --font-color / --btn-bg ...），
+ * 这样换主题色或者切夜间模式时评论区会跟着变。
+ */
+
+#post-comment {
+  --lks-radius: 10px;
+  --lks-border: 1px solid rgba(128, 128, 128, 0.25);
+  --lks-muted: #8a8a8a;
+  --lks-accent: var(--btn-bg, #49b1f5);
+}
+
+/* 容器留白（主题只给了 #post-comment 的位置，样式我们自己来） */
+#post-comment .comment-wrap > div > #lks-comment {
+  margin-top: 8px;
+}
+
+.lks-form {
+  border: var(--lks-border);
+  border-radius: var(--lks-radius);
+  padding: 14px;
+  background: var(--card-bg, transparent);
+}
+
+.lks-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.lks-input,
+.lks-textarea {
+  font: inherit;
+  color: var(--font-color, inherit);
+  background: transparent;
+  border: var(--lks-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.lks-input {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+
+.lks-textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.lks-input:focus,
+.lks-textarea:focus {
+  border-color: var(--lks-accent);
+}
+
+/* 蜜罐：真人看不见 */
+.lks-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.lks-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.lks-msg {
+  font-size: 13px;
+  color: var(--lks-muted);
+  margin-right: auto;
+  word-break: break-all;
+}
+
+.lks-msg-ok { color: #2e9e5b; }
+.lks-msg-err { color: #e05252; }
+
+.lks-submit,
+.lks-more {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  color: #fff;
+  background: var(--lks-accent);
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.lks-submit:hover,
+.lks-more:hover { opacity: 0.86; }
+.lks-submit:active,
+.lks-more:active { transform: scale(0.98); }
+.lks-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.lks-reply-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--lks-muted);
+  margin-top: 8px;
+}
+
+.lks-turnstile:not(:empty) { margin-top: 10px; }
+
+/* ---------------- 评论列表 ---------------- */
+
+.lks-list { margin-top: 16px; }
+
+.lks-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px dashed rgba(128, 128, 128, 0.25);
+}
+
+.lks-item:first-child { border-top: none; }
+
+.lks-avatar {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.lks-main { flex: 1; min-width: 0; }
+
+.lks-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.lks-nick {
+  font-weight: 600;
+  color: var(--font-color, inherit);
+  text-decoration: none;
+}
+
+a.lks-nick:hover { color: var(--lks-accent); }
+
+.lks-time {
+  font-size: 12px;
+  color: var(--lks-muted);
+}
+
+.lks-at {
+  font-size: 12px;
+  color: var(--lks-muted);
+  background: rgba(128, 128, 128, 0.12);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.lks-content {
+  margin-top: 6px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.lks-item-ops {
+  margin-top: 6px;
+  display: flex;
+  gap: 12px;
+}
+
+.lks-op {
+  font: inherit;
+  font-size: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--lks-muted);
+}
+
+.lks-op:hover { color: var(--lks-accent); }
+.lks-op-danger:hover { color: #e05252; }
+.lks-op:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.lks-empty {
+  text-align: center;
+  color: var(--lks-muted);
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+.lks-footer {
+  text-align: center;
+  margin-top: 14px;
+}
+
+/* 手机端：输入框竖排、头像小一点 */
+@media screen and (max-width: 600px) {
+  .lks-input { flex: 1 1 100%; }
+  .lks-avatar { flex-basis: 32px; width: 32px; height: 32px; font-size: 14px; }
+  .lks-form { padding: 12px; }
+}
