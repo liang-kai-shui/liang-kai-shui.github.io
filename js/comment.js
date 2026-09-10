@@ -160,7 +160,7 @@
     submit.type = 'submit'
     actions.append(msg, submit)
 
-    form.append(row, content, hp, turnstileBox, replyBar, actions)
+    form.append(row, content, hp, emojiBar(content), turnstileBox, replyBar, actions)
 
     state.msgEl = msg
     state.replyBar = replyBar
@@ -180,6 +180,57 @@
     if (CFG.turnstileSiteKey) mountTurnstile(turnstileBox)
 
     return form
+  }
+
+  // 表情 / 颜文字选择器：插到光标位置（没点过输入框就追加到末尾）
+  var EMOJI_GROUPS = [
+    ['😄', '😂', '🤣', '😊', '😍', '🤔', '😅', '🙃', '😭', '😴', '🥲', '😎'],
+    ['👍', '👏', '🙏', '💪', '🎉', '🔥', '✨', '☕', '🐟', '🌙', '🍜', '🎮'],
+    ['(๑•̀ㅂ•́)و✧', '(｡•́︿•̀｡)', '(*/ω＼*)', '(╯°□°)╯', 'ヾ(≧▽≦*)o', '(๑´ㅂ`๑)']
+  ]
+
+  function emojiBar (textarea) {
+    var wrap = el('div', 'lks-emoji')
+    var toggle = el('button', 'lks-emoji-toggle', '表情 ▾')
+    toggle.type = 'button'
+    var panel = el('div', 'lks-emoji-panel')
+    panel.style.display = 'none'
+
+    EMOJI_GROUPS.forEach(function (group) {
+      var row = el('div', 'lks-emoji-row')
+      group.forEach(function (item) {
+        var btn = el('button', 'lks-emoji-item', item)
+        btn.type = 'button'
+        btn.title = '插入 ' + item
+        btn.addEventListener('click', function () { insertAtCursor(textarea, item) })
+        row.appendChild(btn)
+      })
+      panel.appendChild(row)
+    })
+
+    toggle.addEventListener('click', function () {
+      var open = panel.style.display !== 'none'
+      panel.style.display = open ? 'none' : ''
+      toggle.textContent = open ? '表情 ▾' : '表情 ▴'
+    })
+
+    wrap.append(toggle, panel)
+    return wrap
+  }
+
+  function insertAtCursor (textarea, text) {
+    var start = textarea.selectionStart
+    var end = textarea.selectionEnd
+    var value = textarea.value
+    if (typeof start !== 'number') {
+      textarea.value = value + text
+    } else {
+      textarea.value = value.slice(0, start) + text + value.slice(end)
+      textarea.selectionStart = textarea.selectionEnd = start + text.length
+    }
+    textarea.focus()
+    // 触发一下 input，方便以后有别的地方监听内容变化
+    textarea.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
   function mountTurnstile (box) {

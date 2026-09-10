@@ -117,6 +117,63 @@
 
 .lks-turnstile:not(:empty) { margin-top: 10px; }
 
+/* ---------------- 表情 / 颜文字选择器 ---------------- */
+
+.lks-emoji { margin-top: 8px; }
+
+.lks-emoji-toggle {
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: var(--lks-border);
+  background: transparent;
+  color: var(--lks-muted);
+}
+
+.lks-emoji-toggle:hover {
+  color: var(--lks-accent);
+  border-color: var(--lks-accent);
+}
+
+.lks-emoji-panel {
+  margin-top: 8px;
+  padding: 8px;
+  border: var(--lks-border);
+  border-radius: 8px;
+  background: var(--card-bg, transparent);
+}
+
+.lks-emoji-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.lks-emoji-row:last-child { margin-bottom: 0; }
+
+.lks-emoji-item {
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.lks-emoji-item:hover {
+  background: rgba(128, 128, 128, 0.16);
+  transform: translateY(-1px);
+}
+
+/* 颜文字那一行格子更宽，字号收小一点 */
+.lks-emoji-row:last-child .lks-emoji-item { font-size: 13px; }
+
 /* ---------------- 评论列表 ---------------- */
 
 .lks-list { margin-top: 16px; }
