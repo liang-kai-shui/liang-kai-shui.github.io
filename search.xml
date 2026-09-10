@@ -49,9 +49,9 @@
       
         <tags>
             
-            <tag> hexo </tag>
-            
             <tag> 站点 </tag>
+            
+            <tag> hexo </tag>
             
         </tags>
       
@@ -128,17 +128,6 @@
     
     
     <entry>
-      <title>关于</title>
-      <link href="/about/index.html"/>
-      <url>/about/index.html</url>
-      
-        <content type="html"><![CDATA[]]></content>
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title></title>
       <link href="/css/comment.css"/>
       <url>/css/comment.css</url>
@@ -173,10 +162,32 @@
     
     <entry>
       <title></title>
+      <link href="/css/stats.css"/>
+      <url>/css/stats.css</url>
+      
+        <content type="html"><![CDATA[/*! * 文章反应（点赞）样式 * 配色复用 Butterfly 的 CSS 变量，自动跟随夜间模式 */#lks-reactions {  margin: 18px 0 6px;  text-align: center;}.lks-reactions-tip {  font-size: 13px;  color: var(--card-meta, #8a8a8a);  margin-bottom: 10px;}.lks-reactions-bar {  display: inline-flex;  gap: 10px;  flex-wrap: wrap;  justify-content: center;}.lks-reaction {  display: inline-flex;  align-items: center;  gap: 6px;  font: inherit;  font-size: 14px;  cursor: pointer;  padding: 6px 14px;  border-radius: 999px;  border: 1px solid rgba(128, 128, 128, 0.28);  background: var(--card-bg, transparent);  color: var(--font-color, inherit);  transition: transform 0.15s, border-color 0.2s, background 0.2s;}.lks-reaction:hover:not(:disabled) {  transform: translateY(-2px);  border-color: var(--btn-bg, #49b1f5);}.lks-reaction:disabled {  cursor: default;  opacity: 0.6;}.lks-reaction.is-done {  border-color: var(--btn-bg, #49b1f5);  background: color-mix(in srgb, var(--btn-bg, #49b1f5) 12%, transparent);  opacity: 1;}.lks-reaction.is-done .lks-reaction-emoji {  animation: lks-pop 0.35s ease;}.lks-reaction-emoji {  font-size: 16px;  line-height: 1;}.lks-reaction-count {  font-size: 13px;  color: var(--card-meta, #8a8a8a);  min-width: 1em;}@keyframes lks-pop {  0% { transform: scale(1); }  50% { transform: scale(1.35); }  100% { transform: scale(1); }}@media screen and (max-width: 600px) {  .lks-reaction { padding: 5px 10px; font-size: 13px; }}]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title></title>
       <link href="/css/progress_bar.css"/>
       <url>/css/progress_bar.css</url>
       
         <content type="html"><![CDATA[.pace {    -webkit-pointer-events: none;    pointer-events: none;    -webkit-user-select: none;    -moz-user-select: none;    user-select: none;    z-index: 2000;    position: fixed;    margin: auto;    top: 10px;    left: 0;    right: 0;    height: 8px;    border-radius: 8px;    width: 4rem;    background: #eaecf2;    border: 1px #e3e8f7;    overflow: hidden;}.pace-inactive .pace-progress {    opacity: 0;    transition: 0.3s ease-in;}.pace .pace-progress {    -webkit-box-sizing: border-box;    -moz-box-sizing: border-box;    -ms-box-sizing: border-box;    -o-box-sizing: border-box;    box-sizing: border-box;    -webkit-transform: translate3d(0, 0, 0);    -moz-transform: translate3d(0, 0, 0);    -ms-transform: translate3d(0, 0, 0);    -o-transform: translate3d(0, 0, 0);    transform: translate3d(0, 0, 0);    max-width: 200px;    position: absolute;    z-index: 2000;    display: block;    top: 0;    right: 100%;    height: 100%;    width: 100%;    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);    animation: gradient 1.5s ease infinite;    background-size: 200%;}.pace.pace-inactive {    opacity: 0;    transition: 0.3s;    top: -8px;}@keyframes gradient {    0% {        background-position: 0% 50%;    }    50% {        background-position: 100% 50%;    }    100% {        background-position: 0% 50%;    }}]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>关于</title>
+      <link href="/about/index.html"/>
+      <url>/about/index.html</url>
+      
+        <content type="html"><![CDATA[]]></content>
       
     </entry>
     
@@ -188,17 +199,6 @@
       <url>/img/manifest.json</url>
       
         <content type="html"><![CDATA[{"name":"摸鱼小窝","short_name":"小窝","theme_color":"#3b70fc","background_color":"#3b70fc","display":"standalone","scope":"/","start_url":"/","icons":[{"src":"/img/siteicon/16.png","sizes":"16x16","type":"image/png"},{"src":"/img/siteicon/32.png","sizes":"32x32","type":"image/png"},{"src":"/img/siteicon/48.png","sizes":"48x48","type":"image/png"},{"src":"/img/siteicon/64.png","sizes":"64x64","type":"image/png"},{"src":"/img/siteicon/128.png","sizes":"128x128","type":"image/png"},{"src":"/img/siteicon/144.png","sizes":"144x144","type":"image/png"},{"src":"/img/siteicon/512.png","sizes":"512x512","type":"image/png"}],"splash_pages":null}]]></content>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title></title>
-      <link href="/css/stats.css"/>
-      <url>/css/stats.css</url>
-      
-        <content type="html"><![CDATA[/*! * 文章反应（点赞）样式 * 配色复用 Butterfly 的 CSS 变量，自动跟随夜间模式 */#lks-reactions {  margin: 18px 0 6px;  text-align: center;}.lks-reactions-tip {  font-size: 13px;  color: var(--card-meta, #8a8a8a);  margin-bottom: 10px;}.lks-reactions-bar {  display: inline-flex;  gap: 10px;  flex-wrap: wrap;  justify-content: center;}.lks-reaction {  display: inline-flex;  align-items: center;  gap: 6px;  font: inherit;  font-size: 14px;  cursor: pointer;  padding: 6px 14px;  border-radius: 999px;  border: 1px solid rgba(128, 128, 128, 0.28);  background: var(--card-bg, transparent);  color: var(--font-color, inherit);  transition: transform 0.15s, border-color 0.2s, background 0.2s;}.lks-reaction:hover:not(:disabled) {  transform: translateY(-2px);  border-color: var(--btn-bg, #49b1f5);}.lks-reaction:disabled {  cursor: default;  opacity: 0.6;}.lks-reaction.is-done {  border-color: var(--btn-bg, #49b1f5);  background: color-mix(in srgb, var(--btn-bg, #49b1f5) 12%, transparent);  opacity: 1;}.lks-reaction.is-done .lks-reaction-emoji {  animation: lks-pop 0.35s ease;}.lks-reaction-emoji {  font-size: 16px;  line-height: 1;}.lks-reaction-count {  font-size: 13px;  color: var(--card-meta, #8a8a8a);  min-width: 1em;}@keyframes lks-pop {  0% { transform: scale(1); }  50% { transform: scale(1.35); }  100% { transform: scale(1); }}@media screen and (max-width: 600px) {  .lks-reaction { padding: 5px 10px; font-size: 13px; }}]]></content>
       
     </entry>
     
@@ -282,22 +282,22 @@
     
     
     <entry>
-      <title>link</title>
-      <link href="/link/index.html"/>
-      <url>/link/index.html</url>
+      <title></title>
+      <link href="/js/title-fly.js"/>
+      <url>/js/title-fly.js</url>
       
-        <content type="html"><![CDATA[]]></content>
+        <content type="html"><![CDATA[/*! * 标签页标题彩蛋 —— 切走 / 切回来时换标题 * * 行为： *   1. 标签页失去焦点（切走、最小化、切到别的 App）→ 标题变成随机一句「挽留」文案 + 颜文字 *   2. 只要还不在前台，每 4 秒随机换一句（不会连续重复同一句） *   3. 切回前台 → 显示随机一句「欢迎回来」文案，约 3 秒后恢复原来的标题 *   4. 兼容 pjax：站内跳转后自动记住新页面的标题作为「原标题」 * * 注入方式：_config.butterfly.yml → inject.bottom */(function () {  'use strict'  // 切走时随机显示 / 轮播  var AWAY = [    '这就要走了吗 (｡•́︿•̀｡)',    '别走嘛，再摸会儿鱼～ (๑•́ ₃ •̀๑)',    '走啦？记得回来哦 (｡･ω･｡)ﾉ♡',    '鱼还没摸够呢 (๑´ㅂ`๑)',    '偷偷溜走被我发现了 (｀・ω・´)',    '小窝会一直等你回来的 (｡•́‿•̀｡)',    '再待一会儿嘛 (つ﹏⊂)',    '走神啦？我先自己玩会儿 (๑¯ω¯๑)',    '别走开太久，鱼会凉的 (｡•̀ᴗ-)✧',    '喂喂，页面还开着呢 (・∀・)',    '摸鱼小窝：已进入待机模式 ᕕ( ᐛ )ᕗ',    '这里有个小窝在等你 (๑˃̵ᴗ˂̵)و'  ]  // 切回来时显示（3 秒后恢复原标题）  var BACK = [    '你终于回来了 (ﾉ´ヮ`)ﾉ*: ･ﾟ',    '欢迎回来～ (๑˃̵ᴗ˂̵)و',    '想你了呢 (๑•́ ₃ •̀๑)',    '回来啦，继续摸鱼吧 (๑´ㅂ`๑)',    '就知道你会回来的 (｡•̀ᴗ-)✧',    '欢迎回家 (｡･ω･｡)ﾉ♡',    '等你好久了 (๑•̀ㅂ•́)و✧',    '回来得正好，茶刚泡好 (｡•́‿•̀｡)'  ]  var ROTATE_MS = 4000   // 离开时轮播间隔  var RESTORE_MS = 3000  // 回来后多久恢复原标题  var originalTitle = document.title  var rotateTimer = null  var restoreTimer = null  var lastAwayIndex = -1  // 随机取一句，尽量不和上一句重复  function pickRandom(list, lastIndex) {    if (list.length <= 1) return { text: list[0], index: 0 }    var index    do {      index = Math.floor(Math.random() * list.length)    } while (index === lastIndex)    return { text: list[index], index: index }  }  function clearTimers() {    if (rotateTimer !== null) { clearInterval(rotateTimer); rotateTimer = null }    if (restoreTimer !== null) { clearTimeout(restoreTimer); restoreTimer = null }  }  function showAway() {    clearTimers()    var picked = pickRandom(AWAY, lastAwayIndex)    lastAwayIndex = picked.index    document.title = picked.text    // 一直没回来就继续换    rotateTimer = setInterval(function () {      var next = pickRandom(AWAY, lastAwayIndex)      lastAwayIndex = next.index      document.title = next.text    }, ROTATE_MS)  }  function showBack() {    clearTimers()    document.title = pickRandom(BACK, -1).text    restoreTimer = setTimeout(function () {      document.title = originalTitle      restoreTimer = null    }, RESTORE_MS)  }  function handleVisibility() {    if (document.hidden) showAway()    else showBack()  }  document.addEventListener('visibilitychange', handleVisibility)  // pjax 站内跳转后，记住新页面的标题  document.addEventListener('pjax:complete', function () {    // pjax 完成时标题刚被替换成新页面的，等一拍再取    setTimeout(function () {      if (!document.hidden) originalTitle = document.title    }, 0)  })  // 如果页面在后台被打开（少数情况），直接进入离开状态  if (document.hidden) showAway()})()]]></content>
       
     </entry>
     
     
     
     <entry>
-      <title></title>
-      <link href="/js/title-fly.js"/>
-      <url>/js/title-fly.js</url>
+      <title>link</title>
+      <link href="/link/index.html"/>
+      <url>/link/index.html</url>
       
-        <content type="html"><![CDATA[/*! * 标签页标题彩蛋 —— 切走 / 切回来时换标题 * * 行为： *   1. 标签页失去焦点（切走、最小化、切到别的 App）→ 标题变成随机一句「挽留」文案 + 颜文字 *   2. 只要还不在前台，每 4 秒随机换一句（不会连续重复同一句） *   3. 切回前台 → 显示随机一句「欢迎回来」文案，约 3 秒后恢复原来的标题 *   4. 兼容 pjax：站内跳转后自动记住新页面的标题作为「原标题」 * * 注入方式：_config.butterfly.yml → inject.bottom */(function () {  'use strict'  // 切走时随机显示 / 轮播  var AWAY = [    '这就要走了吗 (｡•́︿•̀｡)',    '别走嘛，再摸会儿鱼～ (๑•́ ₃ •̀๑)',    '走啦？记得回来哦 (｡･ω･｡)ﾉ♡',    '鱼还没摸够呢 (๑´ㅂ`๑)',    '偷偷溜走被我发现了 (｀・ω・´)',    '小窝会一直等你回来的 (｡•́‿•̀｡)',    '再待一会儿嘛 (つ﹏⊂)',    '走神啦？我先自己玩会儿 (๑¯ω¯๑)',    '别走开太久，鱼会凉的 (｡•̀ᴗ-)✧',    '喂喂，页面还开着呢 (・∀・)',    '摸鱼小窝：已进入待机模式 ᕕ( ᐛ )ᕗ',    '这里有个小窝在等你 (๑˃̵ᴗ˂̵)و'  ]  // 切回来时显示（3 秒后恢复原标题）  var BACK = [    '你终于回来了 (ﾉ´ヮ`)ﾉ*: ･ﾟ',    '欢迎回来～ (๑˃̵ᴗ˂̵)و',    '想你了呢 (๑•́ ₃ •̀๑)',    '回来啦，继续摸鱼吧 (๑´ㅂ`๑)',    '就知道你会回来的 (｡•̀ᴗ-)✧',    '欢迎回家 (｡･ω･｡)ﾉ♡',    '等你好久了 (๑•̀ㅂ•́)و✧',    '回来得正好，茶刚泡好 (｡•́‿•̀｡)'  ]  var ROTATE_MS = 4000   // 离开时轮播间隔  var RESTORE_MS = 3000  // 回来后多久恢复原标题  var originalTitle = document.title  var rotateTimer = null  var restoreTimer = null  var lastAwayIndex = -1  // 随机取一句，尽量不和上一句重复  function pickRandom(list, lastIndex) {    if (list.length <= 1) return { text: list[0], index: 0 }    var index    do {      index = Math.floor(Math.random() * list.length)    } while (index === lastIndex)    return { text: list[index], index: index }  }  function clearTimers() {    if (rotateTimer !== null) { clearInterval(rotateTimer); rotateTimer = null }    if (restoreTimer !== null) { clearTimeout(restoreTimer); restoreTimer = null }  }  function showAway() {    clearTimers()    var picked = pickRandom(AWAY, lastAwayIndex)    lastAwayIndex = picked.index    document.title = picked.text    // 一直没回来就继续换    rotateTimer = setInterval(function () {      var next = pickRandom(AWAY, lastAwayIndex)      lastAwayIndex = next.index      document.title = next.text    }, ROTATE_MS)  }  function showBack() {    clearTimers()    document.title = pickRandom(BACK, -1).text    restoreTimer = setTimeout(function () {      document.title = originalTitle      restoreTimer = null    }, RESTORE_MS)  }  function handleVisibility() {    if (document.hidden) showAway()    else showBack()  }  document.addEventListener('visibilitychange', handleVisibility)  // pjax 站内跳转后，记住新页面的标题  document.addEventListener('pjax:complete', function () {    // pjax 完成时标题刚被替换成新页面的，等一拍再取    setTimeout(function () {      if (!document.hidden) originalTitle = document.title    }, 0)  })  // 如果页面在后台被打开（少数情况），直接进入离开状态  if (document.hidden) showAway()})()]]></content>
+        <content type="html"><![CDATA[]]></content>
       
     </entry>
     
@@ -315,9 +315,9 @@
     
     
     <entry>
-      <title>音乐</title>
-      <link href="/music/index.html"/>
-      <url>/music/index.html</url>
+      <title>tags</title>
+      <link href="/tags/index.html"/>
+      <url>/tags/index.html</url>
       
         <content type="html"><![CDATA[]]></content>
       
@@ -326,9 +326,9 @@
     
     
     <entry>
-      <title>tags</title>
-      <link href="/tags/index.html"/>
-      <url>/tags/index.html</url>
+      <title>音乐</title>
+      <link href="/music/index.html"/>
+      <url>/music/index.html</url>
       
         <content type="html"><![CDATA[]]></content>
       
