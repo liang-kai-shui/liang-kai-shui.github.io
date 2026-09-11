@@ -62,6 +62,14 @@
   pointer-events: none;
 }
 
+/* 面板默认收起。
+   注意这两条不能省：下面给 .lks-pet-panel 写了 display:flex，
+   而 display 会盖过 [hidden] 属性自带的 display:none ——
+   少了这条，panel.hidden = true 根本不生效，表现就是"进站就展开、✕ 关不掉"。 */
+#lks-pet .lks-pet-panel[hidden] {
+  display: none;
+}
+
 /* ------------------------------------------------------------------ 面板 */
 .lks-pet-panel {
   position: absolute;

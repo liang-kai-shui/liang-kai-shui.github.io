@@ -1,35 +1,30 @@
 /*!
  * 看板娘增强：换皮肤 + 聊天
  *
- * 一、换皮肤（这里的写法是被引擎逼出来的，别看晕）
+ * 一、换皮肤
  *
- *   先说结论：**换装靠"存下选择 + 重载页面"，不是就地换模型。**
- *
- *   本来以为就地换很简单：引擎的 theRealInit 每次都先
- *   `document.getElementById(config.name.div)` 把旧容器删掉再建新的
- *   （见 L2Dwidget.0.min.js 里的 createElement），所以再调一次
- *   `L2Dwidget.init({ model: { jsonPath: 新路径 } })` 应该就换好了。
- *   实测**不行**：引擎的 configApplyer 是这么合并配置的 ——
+ *   引擎（xiaze yu 的 live2d-widget）合并配置的写法是：
  *
  *     configApplyer(新配置) → merge(内部配置, 新配置, 默认值)
- *     merge 里：目标已有值时，只有"两边都是对象"才会递归往下合，
+ *     merge 里：目标已有值时，只有"两边都是对象"才递归往下合，
  *               否则**直接忽略新值**（字符串属于这一类）
  *
- *   于是第二次 init 时 `config.model.jsonPath` 已经是个字符串了，新路径被丢掉，
- *   theRealInit 只会拿老路径重建一次容器 —— 白折腾。
- *   （所以我一开始测出来"点了换装、localStorage 变了、模型没变"。）
+ *   所以第二次 `L2Dwidget.init({model:{jsonPath:新路径}})` 是没用的：
+ *   config.model.jsonPath 已经是字符串，新路径被丢掉，等于白 init 一次。
+ *   （第一版就是照"再 init 一次"写的，实测点了没反应、模型纹丝不动。）
  *
- *   那怎么让"选中皮肤"生效？答案是**在插件第一次 init 之前把配置改掉**：
- *   第一次 init 时内部配置还是空的，这时候传进去的值会被原样接收。
- *   插件的 L2Dwidget.init({...}) 是页面里的一段内联脚本，而主题的 inject.bottom
- *   正好画在它前面，所以这段代码能抢先用 defineProperty 拦住 window.L2Dwidget 的赋值，
- *   把 init 包一层：读 localStorage 里存的 {id, url}，改掉 cfg.model.jsonPath 再放行。
- *   好处是访客进站**只下载选中的那套模型**，不会先白下一套默认的（500KB～2.6MB）。
+ *   解决办法是绕过 merge，直接改**引擎内部那个配置对象**：
+ *   引擎的 Widget 构造函数里写着 `this.config = u.config`，而 `u.config`
+ *   就是 configApplyer 往里合并的那个对象 —— 也就是说
+ *   `L2Dwidget.config` 就是内部配置本体。把它上面的 jsonPath 改掉再 init()，
+ *   merge 不会覆盖我们刚写的值，theRealInit 就会按新路径重建容器
+ *   （它每次都会先 removeChild 掉旧容器，所以不会叠两只）。
  *
- *   为什么 localStorage 里要连 URL 一起存：拦 init 的那一刻是同步的，
- *   等不了 /live2d/skins.json 那个异步请求回来，所以地址必须能同步取到。
- *   代价是模型文件改名后可能失效 —— 所以页面加载完会再拉一次清单核对，
- *   发现 id 没了就清掉选择并重载（自愈），地址变了就顺手更新存的那份。
+ *   另外还有一处优化：访客上次选的皮肤要"第一次 init 就生效"。
+ *   插件那段 `L2Dwidget.init({...})` 是页面里的内联脚本，而主题的 inject.bottom
+ *   画在它前面，所以这里能抢先用 defineProperty 拦住 window.L2Dwidget 的赋值，
+ *   把 init 包一层，把选中皮肤的路径塞进去 —— 省掉一次白下载
+ *   （默认那套 koharu 500KB，静香 2.6MB）。
  *
  *   加皮肤 = `npm i live2d-widget-model-xxx` + 重新构建（清单由
  *   scripts/live2d-skins.js 生成），前端不用改。
@@ -101,11 +96,38 @@
       .catch(function () { return null })   // null = 没拉到，和"拉到了但是空"区分开
   }
 
-  /** 换装 = 记住选择 + 重载页面（就地换模型做不到，原因见文件头注释） */
+  /** 从页面里那段 `L2Dwidget.init({...})` 抠出插件用的配置（位置、大小、tagMode 这些） */
+  function baseConfig () {
+    var scripts = document.querySelectorAll('script')
+    for (var i = 0; i < scripts.length; i++) {
+      var text = scripts[i].textContent || ''
+      var m = text.match(/L2Dwidget\.init\(\s*(\{[\s\S]*\})\s*\)/)
+      if (m) {
+        try { return JSON.parse(m[1]) } catch (e) { /* 不是 JSON 就算了 */ }
+      }
+    }
+    return null
+  }
+
+  /**
+   * 换皮肤：不刷新页面。
+   * 关键点是直接改引擎内部那个配置对象（L2Dwidget.config 就是它），
+   * 因为走 init 的参数会被引擎的 merge 丢掉 —— 原因见文件头注释。
+   */
   function applySkin (skin) {
     if (!skin || !skin.url) return false
+    var w = window.L2Dwidget
+    if (!w || !w.config || typeof w.init !== 'function') return false
+
     write(SKIN_KEY, JSON.stringify({ id: skin.id, url: skin.url }))
-    window.location.reload()
+
+    w.config.model = w.config.model || {}
+    w.config.model.jsonPath = skin.url
+
+    // 再 init 一次：theRealInit 会先 removeChild 掉旧容器再建新的，不会叠两只。
+    // 传插件那份原始配置是为了把位置/大小/tagMode 都摆回原样；
+    // 里面的旧 jsonPath 会被 merge 忽略掉（正是那个"坑"帮了我们）。
+    w.init(baseConfig() || {})
     return true
   }
 
@@ -132,8 +154,8 @@
 
   /**
    * 页面加载完之后拿清单核对一次：
-   *   · 存的皮肤已经不在清单里（模型被删/改名）→ 清掉选择并重载，免得看板娘永远出不来
-   *   · 地址变了 → 更新存的那份，下次进站用新地址
+   *   · 存的皮肤已经不在清单里（模型被删/改名）→ 清掉选择，就地换回默认那套
+   *   · 地址变了 → 更新存的那份，免得下次进站拿着老地址扑空
    * 只在真的拉到清单时才动手，拉失败就保持现状（否则会清掉用户的选择）
    */
   function reconcileSkin () {
@@ -144,7 +166,6 @@
       var hit = skins.filter(function (s) { return s.id === want.id })[0]
       if (!hit) {
         try { window.localStorage.removeItem(SKIN_KEY) } catch (e) { /* 忽略 */ }
-        window.location.reload()
         return
       }
       if (hit.url !== want.url) write(SKIN_KEY, JSON.stringify({ id: hit.id, url: hit.url }))
@@ -405,8 +426,15 @@
         if (skin.id === currentId) b.classList.add('on')
         b.addEventListener('click', function () {
           if (skin.id === currentId) return
-          b.textContent = '换装中…'
-          applySkin(skin)
+          if (!applySkin(skin)) {
+            tip.textContent = '看板娘还没加载好，过一会儿再换试试。'
+            return
+          }
+          tip.textContent = ''
+          currentId = skin.id
+          var on = wrap.querySelector('.on')
+          if (on) on.classList.remove('on')
+          b.classList.add('on')
         })
         wrap.appendChild(b)
       })
