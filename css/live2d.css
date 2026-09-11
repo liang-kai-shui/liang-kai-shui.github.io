@@ -182,15 +182,6 @@
   transform: scale(.96);
 }
 
-/* 隐私说明：既然会留档，就明说 */
-.lks-pet-note {
-  margin: 0;
-  padding: 0 12px 10px;
-  color: var(--pet-muted);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
 .lks-pet-body {
   display: flex;
   flex-direction: column;

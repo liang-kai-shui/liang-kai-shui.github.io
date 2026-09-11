@@ -40,9 +40,23 @@
   var SKIN_KEY = 'lks_live2d_skin'
   var HISTORY_KEY = 'lks_chat_history'
   var SESSION_KEY = 'lks_chat_session'
+  var META_KEY = 'lks-comment-meta'   // 评论区那份（昵称/邮箱/网址），两边共用同一个身份
   var CONFIG = window.LKS_CHAT || {}
   var API = (CONFIG.api || '').replace(/\/+$/, '')
   var MAX_HISTORY = Number(CONFIG.maxHistory) > 0 ? Number(CONFIG.maxHistory) : 20
+
+  /**
+   * 访客在评论区填过的昵称（comment.js 存在 lks-comment-meta 里）。
+   * 聊天时带上它，后台就能按人认；换了名字也能靠 IP 哈希关联起来。
+   */
+  function savedNick () {
+    try {
+      var meta = JSON.parse(window.localStorage.getItem(META_KEY) || '{}')
+      return typeof meta.nick === 'string' ? meta.nick.trim().slice(0, 30) : ''
+    } catch (e) {
+      return ''
+    }
+  }
 
   /* ==================================================================== *
    * 小工具
@@ -237,6 +251,8 @@
         // session 用来把一次对话串起来（后台按会话查看/统计）；
         // 点"清空对话"会换一个新的 session，所以清空之后是干净的一段
         session: currentSession(),
+        // 评论区的昵称（填过才有），后台拿它认人、也能列出曾用名
+        nick: savedNick(),
         path: window.location.pathname
       })
     }).then(function (r) {
@@ -263,7 +279,7 @@
    * 三、界面
    * ==================================================================== */
 
-  var root, launcher, panel, msgsBox, form, input, typing, tip, note, clearBtn, skinsBox, tabChat, tabSkin
+  var root, launcher, panel, msgsBox, form, input, typing, tip, clearBtn, skinsBox, tabChat, tabSkin
 
   function buildUI () {
     root = el('div', 'lks-pet')
@@ -328,13 +344,11 @@
     form.appendChild(input)
     form.appendChild(submit)
     tip = el('p', 'lks-pet-tip')
-    note = el('p', 'lks-pet-note', '聊天内容会被记录，用来改进这个看板娘，别发隐私信息。')
     chatPane.appendChild(msgsBox)
     chatPane.appendChild(typing)
     chatPane.appendChild(quick)
     chatPane.appendChild(form)
     chatPane.appendChild(tip)
-    chatPane.appendChild(note)
 
     // —— 换装 ——
     var skinPane = el('div', 'lks-pet-pane lks-pet-skins')
