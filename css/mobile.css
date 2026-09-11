@@ -1,0 +1,497 @@
+/* ===========================================================================
+ * 手机端体验优化
+ *
+ * 这个文件是 2026-09-11 加的，原因是手机上的阅读和点按体验都比较将就：
+ *   · 正文还是 14px（桌面合适，手机上偏小）
+ *   · 汉堡按钮 29x38、导航图标 18x25、右下工具按钮 35x35 —— 手指点不准
+ *   · 评论输入框 14px，iOS 上一聚焦就会把整个页面放大
+ *   · 首页卡片左右只剩 5px 边距，卡片贴着屏幕边
+ *   · 触屏上的 :hover 会"粘住"，点一下卡片会一直保持悬停样式
+ *   · iPhone 底部那条小白条（安全区）会压住右下角的按钮
+ *
+ * 组织方式：
+ *   第一部分  手机端覆盖（全部在 max-width: 768px 里）
+ *   第二部分  图片灯箱（两端通用，手机上是主要受益者）
+ *   第三部分  减弱动效（跟随系统设置）
+ *
+ * 这里只写"手机上怎么显示"，不改桌面；要改桌面请用 custom.css。
+ * 由 _config.butterfly.yml → inject.head 引入（在主题样式之后，所以能覆盖它）。
+ * =========================================================================== */
+
+/* ===========================================================================
+ * 第一部分：手机端（≤ 768px）
+ * =========================================================================== */
+@media screen and (max-width: 768px) {
+
+  /* -------------------------------------------------------------------------
+   * 0. 触屏基础
+   * ---------------------------------------------------------------------- */
+  html {
+    /* 横屏时不要让浏览器自己放大字号 */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* 去掉"双击放大"（它还会带来 300ms 的点击延迟）。
+       manipulation 只是禁掉双击，双指缩放仍然可用。 */
+    touch-action: manipulation;
+  }
+
+  body {
+    /* 点按时的灰色方块，主题没关，看着很旧；改成自己写 :active 反馈 */
+    -webkit-tap-highlight-color: transparent;
+    /* 防止左右滑动时整页跟着晃（正文里的代码块/表格自己会横滑） */
+    overscroll-behavior-x: none;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 1. 导航栏
+   *    原来：图标按钮 18x25、汉堡按钮 29x38 —— 手指按不准（推荐 ≥ 44px）
+   *    做法：把点击区域撑大，图标尺寸不动，视觉上还是原来那样
+   * ---------------------------------------------------------------------- */
+  #nav {
+    padding: 0 8px 0 16px;
+  }
+
+  #nav #menus .site-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0 6px;
+  }
+
+  /* 搜索按钮外面还套了一层 #search-button，点它才是打开搜索，
+     所以这一层也要撑大，不然"能点的区域"还是只有 24px 高。
+     （文字标签主题在手机上本来就会隐藏：`#nav.hide-menu #search-button span:not(.site-page)`） */
+  #nav #search-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+  }
+
+  #nav #toggle-menu .site-page {
+    min-width: 46px;
+    min-height: 46px;
+    font-size: 1.05em;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 2. 抽屉菜单（右上角汉堡打开的那块）
+   *    注意：主题是 #sidebar 里嵌 #sidebar-menus 写的，编译出来是
+   *    `#sidebar #sidebar-menus`（两个 ID）。这里必须跟着写成一样，
+   *    否则光写 #sidebar-menus 会被主题压住，改了不生效。
+   * ---------------------------------------------------------------------- */
+  /* 菜单项原来高 36px，一行一个，手指很容易点到隔壁 */
+  #sidebar #sidebar-menus .menus_items .site-page {
+    margin: 2px 0;
+    padding: 11px 23px 11px 15px;
+    border-radius: 10px;
+    transition: background-color .15s, color .15s, transform .15s;
+  }
+
+  /* 抽屉本身：加一点阴影，跟页面拉开层次 */
+  #sidebar #sidebar-menus {
+    box-shadow: -8px 0 28px rgba(7, 17, 27, .18);
+    /* iPhone 底部安全区，免得最后一项贴着小白条 */
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+
+  /* 遮罩加毛玻璃，比纯黑好看，也更明确"点这里能关" */
+  #sidebar #menu-mask {
+    background: rgba(0, 0, 0, .45) !important;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  /* 抽屉里的头像和站点数据块，间距收紧一点 */
+  #sidebar #sidebar-menus .site-data {
+    padding: 0 14px;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 3. 首页：头图 + 文章卡片
+   * ---------------------------------------------------------------------- */
+  /* 手机上用 svh（小视口高度）：地址栏收起/展开时高度不会跳。
+     不支持的浏览器会忽略这行，继续用配置里的 50vh。 */
+  #page-header.full_page {
+    height: 52svh;
+    min-height: 320px;
+  }
+
+  /* 站名：custom.css 里用 `h1#site-title { font-size: 3em !important }` 定死了
+     42px（那是桌面尺寸），手机上占太满。两个都是 !important 时比选择器权重，
+     `#page-header #site-title` 比 `h1#site-title` 高，所以这里能盖下去。 */
+  #page-header #site-title {
+    font-size: 2.5em !important;
+  }
+
+  #page-header #site-subtitle {
+    font-size: 1.05em;
+  }
+
+  /* 卡片：原来左右各 5px 贴边，圆角 8px；改成留点呼吸感 */
+  #recent-posts .recent-post-item {
+    margin: 0 6px 16px;
+    border-radius: 14px;
+  }
+
+  /* 封面图原来固定 230px 高，手机上占掉小半屏；压到 190px 多露一点内容 */
+  #recent-posts .recent-post-item .post_cover {
+    height: 190px;
+  }
+
+  #recent-posts .recent-post-item .post_cover img {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #recent-posts .recent-post-item > .recent-post-info {
+    padding: 16px 18px 22px;
+  }
+
+  /* 标题原来 20px / 400 字重，偏轻；加粗并缩小一点，更像"标题" */
+  #recent-posts .recent-post-item > .recent-post-info > .article-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  /* 卡片里的日期/分类/标签那一行 */
+  #recent-posts .article-meta-wrap {
+    font-size: .92em;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 4. 文章页：正文排版（手机上最重要的一块）
+   * ---------------------------------------------------------------------- */
+  #article-container {
+    /* 14px → 16px。手机上 14px 相当于纸书的小五号，看久了累 */
+    font-size: 16px;
+    line-height: 1.78;
+    word-break: break-word;
+  }
+
+  #article-container p {
+    margin: 0 0 1.05em;
+    /* 让浏览器少留"孤字"（Chrome 117+ / Safari 17.5+ 支持，不支持就忽略） */
+    text-wrap: pretty;
+  }
+
+  #article-container h2,
+  #article-container h3 {
+    text-wrap: balance;
+  }
+
+  #article-container h2 {
+    margin: 1.7em 0 .75em;
+    font-size: 1.32em;
+  }
+
+  #article-container h3 {
+    margin: 1.4em 0 .6em;
+    font-size: 1.16em;
+  }
+
+  #article-container h4 {
+    font-size: 1.05em;
+  }
+
+  /* 图片：圆角 + 轻微阴影，看着更整 */
+  #article-container img {
+    border-radius: 10px;
+  }
+
+  /* 引用块：跟着正文变宽后，内边距也要放大一点才不挤 */
+  #article-container blockquote {
+    padding: 10px 16px;
+    border-radius: 10px;
+  }
+
+  /* 代码块：圆角、允许横滑并提示可以滑（原来没有滚动提示） */
+  #article-container figure.highlight,
+  #article-container pre {
+    border-radius: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #article-container .table-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 表格在手机上本来就该横滑，给个圆角别割裂 */
+  #article-container table {
+    font-size: .94em;
+  }
+
+  /* 行内的标签小徽章（{% bdage %} 之类）在手机上也别太大 */
+  #article-container .tag-plugin {
+    max-width: 100%;
+  }
+
+  /* 文章底部的"上一篇/下一篇"卡片：正文变大后，这里的字号也跟着调 */
+  #pagination .prev-post,
+  #pagination .next-post {
+    font-size: .95em;
+  }
+
+  /* 分页按钮 2.5em ≈ 40px，手机上再大一点更好点 */
+  #pagination .page-number,
+  #pagination .extend {
+    width: 42px;
+    height: 42px;
+    margin: 0 3px;
+    border-radius: 12px;
+    line-height: 42px;
+  }
+
+  /* 标签云 / 分类页的标签，做成能点的胶囊 */
+  #article-container .tag-cloud-list a,
+  .category-lists .category-list-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 5. 评论框：输入框必须 ≥ 16px，否则 iOS 一聚焦就把页面放大
+   * ---------------------------------------------------------------------- */
+  #lks-comment .lks-input,
+  #lks-comment .lks-textarea,
+  #lks-comment input,
+  #lks-comment textarea {
+    font-size: 16px;
+    border-radius: 10px;
+    padding: 11px 12px;
+  }
+
+  #lks-comment .lks-submit {
+    min-height: 44px;
+    padding: 0 20px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
+
+  #lks-comment .lks-emoji-toggle {
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+  }
+
+  /* 表情格子原来一格 32px，手指容易点错 */
+  #lks-comment .lks-emoji-item {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #lks-comment .lks-op {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  /* 主题自带搜索框同理，也躲不开 iOS 的放大 */
+  .local-search-box--input {
+    font-size: 16px !important;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 6. 固定元素：右下角工具栏
+   *    主题是 35x35、右下 15px。手机上加到 42px，并给 iPhone 安全区让位。
+   * ---------------------------------------------------------------------- */
+  #rightside {
+    bottom: calc(18px + env(safe-area-inset-bottom));
+  }
+
+  #rightside > div > button,
+  #rightside > div > a {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 7px;
+    border-radius: 13px;
+    line-height: 42px;
+    font-size: 17px;
+    box-shadow: 0 2px 10px rgba(7, 17, 27, .12);
+  }
+
+  /* -------------------------------------------------------------------------
+   * 7. 音乐播放器（fixed 模式是左下角一个小把手，点开才是圆盘）
+   *    原来把手只有 18px 宽，基本看不见；这里加宽一点并给安全区让位。
+   * ---------------------------------------------------------------------- */
+  .aplayer.aplayer-fixed .aplayer-body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .aplayer.aplayer-fixed .aplayer-miniswitcher {
+    width: 24px;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 2px 0 10px rgba(7, 17, 27, .18);
+  }
+
+  /* -------------------------------------------------------------------------
+   * 8. 触屏反馈：触屏没有 hover，只有 :active，得自己给反馈
+   * ---------------------------------------------------------------------- */
+  .recent-post-item {
+    transition: transform .16s ease, box-shadow .16s ease;
+  }
+
+  .recent-post-item:active {
+    transform: scale(.985);
+  }
+
+  #rightside > div > button:active,
+  #rightside > div > a:active {
+    transform: scale(.9);
+  }
+
+  #sidebar #sidebar-menus .menus_items .site-page:active {
+    background: var(--text-bg-hover);
+    color: var(--white);
+  }
+
+  #nav .site-page:active,
+  #nav a:active {
+    opacity: .6;
+  }
+
+  #pagination .page-number:active,
+  #pagination .extend:active {
+    transform: scale(.94);
+  }
+}
+
+/* ===========================================================================
+ * 横屏（手机横过来）
+ * 主题的 viewport 是 viewport-fit=cover，也就是页面铺满整屏，
+ * 所以横屏时刘海会盖在左右两侧，导航栏要自己让开
+ * =========================================================================== */
+@media screen and (orientation: landscape) and (max-height: 520px) {
+  #nav {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  /* 横屏时头图别占太高，不然一屏全是图 */
+  #page-header.full_page {
+    height: 80svh;
+  }
+}
+
+/* ===========================================================================
+ * 触屏设备（没有鼠标）上的额外处理
+ * 触屏浏览器会在点完之后保留 :hover 状态，桌面那套"悬停上浮 + 下划线"
+ * 就会卡在最后点过的那个元素上，看着像坏了
+ * =========================================================================== */
+@media (hover: none) {
+  /* 导航项的悬停下划线在触屏上没有意义，直接关掉（顺便给上面的点击区域让路） */
+  #nav #menus .site-page:not(.child)::after {
+    display: none !important;
+  }
+
+  #recent-posts .recent-post-item:hover {
+    transform: none;
+    box-shadow: var(--card-box-shadow);
+  }
+
+  #recent-posts .recent-post-item:hover .post-bg {
+    transform: none;
+  }
+
+  #sidebar #sidebar-menus .menus_items .site-page:hover {
+    background: transparent;
+    color: var(--font-color);
+  }
+
+  #rightside > div > button:hover,
+  #rightside > div > a:hover {
+    background-color: var(--btn-bg);
+    color: var(--btn-color);
+  }
+
+  /* 触屏上链接的悬停变色会粘住，取消掉 */
+  #article-container a:hover {
+    color: inherit;
+  }
+}
+
+/* ===========================================================================
+ * 第二部分：图片灯箱（点击正文图片 → 全屏看大图）
+ *
+ * 为什么自己做：主题自带的 lightbox 要开 fancybox/medium_zoom，会往每个页面
+ * 注入一整套 JS/CSS（还会给 <img> 加属性，动到 HTML 结构）；这里的用法很简单，
+ * 一个 40 行的脚本就够了 —— source/js/mobile.js
+ *
+ * 交互：点图片打开 → 点任意处/按 Esc/向下滑 关闭
+ * =========================================================================== */
+.lks-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, .88);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity .22s ease;
+  /* 双指放大图片仍然可用；单指上下拖是滚长图，不是关闭（关闭由脚本判断） */
+  touch-action: manipulation;
+  overflow: auto;
+}
+
+.lks-lightbox.show {
+  opacity: 1;
+}
+
+.lks-lightbox img {
+  max-width: 100%;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100svh - 32px);
+  border-radius: 10px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, .5);
+  transform: scale(.94);
+  transition: transform .22s ease;
+  will-change: transform;
+}
+
+.lks-lightbox.show img {
+  transform: scale(1);
+}
+
+.lks-lightbox-hint {
+  position: fixed;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  left: 0;
+  width: 100%;
+  color: rgba(255, 255, 255, .7);
+  text-align: center;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* 灯箱 / 抽屉打开时锁住背后页面
+   （只给 body 加 overflow:hidden 在手机上没用 —— 滚动的是 html，
+   所以配合 JS 里的 position:fixed + 负 top 方案） */
+body.lks-lock {
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ===========================================================================
+ * 第三部分：系统开了"减弱动态效果"时，关掉这些花哨东西
+ * =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  #nav,
+  #rightside,
+  #sidebar-menus,
+  .recent-post-item,
+  .scroll-down-effects,
+  #article-container img {
+    transition: none !important;
+    animation: none !important;
+  }
+}
