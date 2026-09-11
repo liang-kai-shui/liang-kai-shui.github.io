@@ -1,0 +1,313 @@
+/*!
+ * 摸鱼小窝 · 看板娘增强（换装 + 聊天）的样式
+ *
+ * 配色复用 Butterfly 的 CSS 变量，这样切夜间模式、换主题色都会跟着变，
+ * 不用自己维护两套。逻辑在 source/js/live2d-extras.js。
+ *
+ * 位置策略：
+ *   桌面端看板娘在左下角（占 left 0~150、bottom -20~280），所以按钮和面板都往右挪开，
+ *   免得盖住她；手机上 _config.yml 里 mobile.show 是 false（看板娘不渲染），
+ *   CSS 里把按钮变成一个左下角的悬浮按钮，聊天在手机上照样能用。
+ */
+
+#lks-pet {
+  --pet-radius: 14px;
+  --pet-border: 1px solid rgba(128, 128, 128, .22);
+  --pet-muted: #8a8a8a;
+  --pet-accent: var(--btn-bg, #49b1f5);
+  --pet-shadow: 0 8px 30px rgba(7, 17, 27, .16);
+  position: fixed;
+  left: 12px;
+  bottom: 24px;
+  z-index: 99998;        /* 比看板娘（99999）低一点，反正她不挡点击 */
+  font-size: 14px;
+}
+
+/* 看板娘在的时候，按钮挪到她右边 */
+#lks-pet.lks-pet-on-left {
+  left: 158px;
+}
+
+/* ---------------------------------------------------------------- 悬浮按钮 */
+.lks-pet-launcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--card-bg, #fff);
+  box-shadow: var(--pet-shadow);
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.lks-pet-launcher:hover {
+  transform: translateY(-2px);
+}
+
+.lks-pet-launcher:active {
+  transform: scale(.94);
+}
+
+.lks-pet-launcher-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+#lks-pet.lks-pet-open .lks-pet-launcher {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ 面板 */
+.lks-pet-panel {
+  position: absolute;
+  left: 0;
+  bottom: 58px;
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  max-height: min(62vh, 520px);
+  overflow: hidden;
+  border: var(--pet-border);
+  border-radius: var(--pet-radius);
+  background: var(--card-bg, #fff);
+  box-shadow: var(--pet-shadow);
+  color: var(--font-color, #4c4948);
+}
+
+.lks-pet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 8px 12px;
+  border-bottom: var(--pet-border);
+}
+
+.lks-pet-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.lks-pet-tab {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pet-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lks-pet-tab.on {
+  background: var(--pet-accent);
+  color: #fff;
+}
+
+.lks-pet-close {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pet-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.lks-pet-close:hover {
+  background: var(--text-bg-hover, rgba(128, 128, 128, .12));
+  color: var(--font-color, #4c4948);
+}
+
+.lks-pet-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lks-pet-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lks-pet-pane[hidden] {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ 消息 */
+.lks-pet-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  min-height: 140px;
+  max-height: 40vh;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lks-pet-msg {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.lks-pet-msg-user {
+  justify-content: flex-end;
+}
+
+.lks-pet-bubble {
+  max-width: 82%;
+  padding: 8px 11px;
+  border-radius: 12px;
+  background: rgba(128, 128, 128, .12);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.lks-pet-msg-user .lks-pet-bubble {
+  background: var(--pet-accent);
+  color: #fff;
+}
+
+.lks-pet-typing {
+  padding: 0 14px 8px;
+  color: var(--pet-muted);
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------ 输入区 */
+.lks-pet-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 10px 12px 4px;
+  border-top: var(--pet-border);
+}
+
+.lks-pet-input {
+  flex: 1;
+  min-height: 38px;
+  max-height: 96px;
+  padding: 9px 11px;
+  border: var(--pet-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--font-color, inherit);
+  font: inherit;
+  font-size: 16px;       /* iOS 上 <16px 一聚焦就放大页面 */
+  line-height: 1.5;
+  outline: none;
+  resize: none;
+}
+
+.lks-pet-input:focus {
+  border-color: var(--pet-accent);
+}
+
+.lks-pet-send {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--pet-accent);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.lks-pet-send:active {
+  transform: scale(.96);
+}
+
+.lks-pet-form.lks-pet-busy .lks-pet-send {
+  opacity: .6;
+  cursor: default;
+}
+
+.lks-pet-tip {
+  margin: 0;
+  padding: 0 12px 10px;
+  color: #e05252;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.lks-pet-tip:empty {
+  padding: 0;
+}
+
+/* ------------------------------------------------------------------ 换装 */
+.lks-pet-skins {
+  padding: 12px;
+}
+
+.lks-pet-hint {
+  margin: 0 0 10px;
+  color: var(--pet-muted);
+  font-size: 12px;
+}
+
+.lks-pet-skin-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lks-pet-skin {
+  padding: 8px 14px;
+  border: var(--pet-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--font-color, inherit);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lks-pet-skin:hover {
+  border-color: var(--pet-accent);
+  color: var(--pet-accent);
+}
+
+.lks-pet-skin.on {
+  border-color: var(--pet-accent);
+  background: var(--pet-accent);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------- 手机端 */
+@media screen and (max-width: 768px) {
+  /* 手机上看板娘不渲染，按钮就别往右挪了；顺便躲开左下角的播放器把手 */
+  #lks-pet,
+  #lks-pet.lks-pet-on-left {
+    left: 12px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .lks-pet-panel {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(140px + env(safe-area-inset-bottom));
+    width: auto;
+    max-width: none;
+    max-height: 58vh;
+  }
+
+  .lks-pet-msgs {
+    max-height: 34vh;
+  }
+
+  .lks-pet-skin {
+    min-height: 40px;      /* 手指点得准一点 */
+    padding: 8px 16px;
+  }
+
+  .lks-pet-send {
+    height: 44px;
+  }
+}

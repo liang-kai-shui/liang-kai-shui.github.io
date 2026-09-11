@@ -1,0 +1,29 @@
+{
+  "default": "koharu",
+  "skins": [
+    {
+      "id": "koharu",
+      "name": "小春",
+      "url": "/live2dw/assets/koharu.model.json",
+      "isDefault": true
+    },
+    {
+      "id": "hijiki",
+      "name": "小黑猫",
+      "url": "/live2d/skins/hijiki/hijiki.model.json",
+      "isDefault": false
+    },
+    {
+      "id": "shizuku",
+      "name": "静香",
+      "url": "/live2d/skins/shizuku/shizuku.model.json",
+      "isDefault": false
+    },
+    {
+      "id": "wanko",
+      "name": "小狗",
+      "url": "/live2d/skins/wanko/wanko.model.json",
+      "isDefault": false
+    }
+  ]
+}
