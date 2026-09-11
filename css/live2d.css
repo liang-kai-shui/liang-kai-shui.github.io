@@ -132,6 +132,65 @@
   color: var(--font-color, #4c4948);
 }
 
+/* 清空对话：文字按钮，做得低调一点，免得误点 */
+.lks-pet-clear {
+  margin-left: auto;
+  margin-right: 4px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pet-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.lks-pet-clear:hover {
+  background: var(--text-bg-hover, rgba(128, 128, 128, .12));
+  color: #e05252;
+}
+
+.lks-pet-clear:active {
+  transform: scale(.94);
+}
+
+/* 快捷问法：一排小胶囊 */
+.lks-pet-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px 0;
+}
+
+.lks-pet-quick-btn {
+  padding: 5px 10px;
+  border: var(--pet-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pet-muted);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lks-pet-quick-btn:hover {
+  border-color: var(--pet-accent);
+  color: var(--pet-accent);
+}
+
+.lks-pet-quick-btn:active {
+  transform: scale(.96);
+}
+
+/* 隐私说明：既然会留档，就明说 */
+.lks-pet-note {
+  margin: 0;
+  padding: 0 12px 10px;
+  color: var(--pet-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .lks-pet-body {
   display: flex;
   flex-direction: column;
@@ -179,6 +238,18 @@
 
 .lks-pet-msg-user .lks-pet-bubble {
   background: var(--pet-accent);
+  color: #fff;
+}
+
+/* 回复里提到的文章链接 */
+.lks-pet-bubble a {
+  color: var(--pet-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+.lks-pet-msg-user .lks-pet-bubble a {
   color: #fff;
 }
 
@@ -317,5 +388,21 @@
 
   .lks-pet-send {
     height: 44px;
+  }
+
+  /* 手机上面板窄，快捷问法允许横滑，别把面板撑高 */
+  .lks-pet-quick {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .lks-pet-clear {
+    min-height: 40px;
+    padding: 5px 12px;
+  }
+
+  .lks-pet-quick-btn {
+    min-height: 36px;
   }
 }

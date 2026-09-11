@@ -39,9 +39,10 @@
 
   var SKIN_KEY = 'lks_live2d_skin'
   var HISTORY_KEY = 'lks_chat_history'
+  var SESSION_KEY = 'lks_chat_session'
   var CONFIG = window.LKS_CHAT || {}
   var API = (CONFIG.api || '').replace(/\/+$/, '')
-  var MAX_HISTORY = Number(CONFIG.maxHistory) > 0 ? Number(CONFIG.maxHistory) : 12
+  var MAX_HISTORY = Number(CONFIG.maxHistory) > 0 ? Number(CONFIG.maxHistory) : 20
 
   /* ==================================================================== *
    * 小工具
@@ -58,13 +59,6 @@
   }
   function write (key, val) {
     try { window.localStorage.setItem(key, val) } catch (e) { /* 隐私模式 */ }
-  }
-
-  function readSession (key) {
-    try { return window.sessionStorage.getItem(key) } catch (e) { return null }
-  }
-  function writeSession (key, val) {
-    try { window.sessionStorage.setItem(key, val) } catch (e) { /* 隐私模式 */ }
   }
 
   /* ==================================================================== *
@@ -180,8 +174,15 @@
   var sending = false
   var history = []
 
+  // 快捷问法：点了直接发出去。挑的都是"能体现它读过博客"的问题
+  var QUICK_ASKS = ['这个站都写了啥？', '帮我总结最新那篇', '最近在折腾什么？']
+
+  /**
+   * 对话历史存 localStorage（不是 sessionStorage）：
+   * 刷新页面、切到别的标签再回来，上下文都还在 —— 不然聊到一半刷新就"失忆"了。
+   */
   function loadHistory () {
-    var raw = readSession(HISTORY_KEY)
+    var raw = read(HISTORY_KEY)
     if (!raw) return []
     try {
       var arr = JSON.parse(raw)
@@ -190,7 +191,28 @@
   }
 
   function saveHistory () {
-    writeSession(HISTORY_KEY, JSON.stringify(history.slice(-MAX_HISTORY)))
+    write(HISTORY_KEY, JSON.stringify(history.slice(-MAX_HISTORY)))
+  }
+
+  /** 一次对话的 id：后台拿它把消息串成一个会话；清空对话会换一个新的 */
+  function currentSession () {
+    var s = read(SESSION_KEY)
+    if (!s || !/^[A-Za-z0-9_-]{1,64}$/.test(s)) {
+      s = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+      write(SESSION_KEY, s)
+    }
+    return s
+  }
+
+  /** 清空对话：丢掉历史 + 换会话 id，下次提问就是全新的一段（避免之前的上下文带偏） */
+  function clearChat () {
+    history = []
+    try { window.localStorage.removeItem(HISTORY_KEY) } catch (e) { /* 忽略 */ }
+    try { window.localStorage.removeItem(SESSION_KEY) } catch (e) { /* 忽略 */ }
+    currentSession()
+    if (msgsBox) msgsBox.textContent = ''
+    if (tip) tip.textContent = ''
+    renderHistory()
   }
 
   function checkChat () {
@@ -210,7 +232,13 @@
     return fetch(API + '/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ messages: msgs.slice(-MAX_HISTORY) })
+      body: JSON.stringify({
+        messages: msgs.slice(-MAX_HISTORY),
+        // session 用来把一次对话串起来（后台按会话查看/统计）；
+        // 点"清空对话"会换一个新的 session，所以清空之后是干净的一段
+        session: currentSession(),
+        path: window.location.pathname
+      })
     }).then(function (r) {
       return r.json().catch(function () { return {} }).then(function (j) {
         if (r.ok && j && j.ok && j.data && j.data.reply) return j.data.reply
@@ -235,7 +263,7 @@
    * 三、界面
    * ==================================================================== */
 
-  var root, launcher, panel, msgsBox, form, input, typing, tip, skinsBox, tabChat, tabSkin
+  var root, launcher, panel, msgsBox, form, input, typing, tip, note, clearBtn, skinsBox, tabChat, tabSkin
 
   function buildUI () {
     root = el('div', 'lks-pet')
@@ -258,10 +286,16 @@
     tabSkin.type = 'button'
     tabs.appendChild(tabChat)
     tabs.appendChild(tabSkin)
+    // 清空对话：把聊过的一整段丢掉，换一个新的会话 id。
+    // 为什么需要它：上下文是整段发给模型的，之前聊跑偏了会一直影响后面的回答
+    clearBtn = el('button', 'lks-pet-clear', '清空')
+    clearBtn.type = 'button'
+    clearBtn.title = '清空这次对话（之前聊的就不再带进上下文了）'
     var close = el('button', 'lks-pet-close', '✕')
     close.type = 'button'
     close.title = '收起'
     head.appendChild(tabs)
+    head.appendChild(clearBtn)
     head.appendChild(close)
 
     var body = el('div', 'lks-pet-body')
@@ -271,20 +305,36 @@
     msgsBox = el('div', 'lks-pet-msgs')
     typing = el('div', 'lks-pet-typing', '正在想…')
     typing.hidden = true
+
+    // 快捷问法：既省事，也顺便告诉访客"这玩意能问博客里的事"
+    var quick = el('div', 'lks-pet-quick')
+    QUICK_ASKS.forEach(function (text) {
+      var b = el('button', 'lks-pet-quick-btn', text)
+      b.type = 'button'
+      b.addEventListener('click', function () {
+        input.value = text
+        submitMsg()
+      })
+      quick.appendChild(b)
+    })
+
     form = el('form', 'lks-pet-form')
     input = el('textarea', 'lks-pet-input')
     input.rows = 1
-    input.placeholder = '说点什么…'
+    input.placeholder = '说点什么…（Enter 发送，Shift+Enter 换行）'
     input.maxLength = 1000
     var submit = el('button', 'lks-pet-send', '发送')
     submit.type = 'submit'
     form.appendChild(input)
     form.appendChild(submit)
     tip = el('p', 'lks-pet-tip')
+    note = el('p', 'lks-pet-note', '聊天内容会被记录，用来改进这个看板娘，别发隐私信息。')
     chatPane.appendChild(msgsBox)
     chatPane.appendChild(typing)
+    chatPane.appendChild(quick)
     chatPane.appendChild(form)
     chatPane.appendChild(tip)
+    chatPane.appendChild(note)
 
     // —— 换装 ——
     var skinPane = el('div', 'lks-pet-pane lks-pet-skins')
@@ -301,6 +351,7 @@
 
     launcher.addEventListener('click', togglePanel)
     close.addEventListener('click', function () { setOpen(false) })
+    clearBtn.addEventListener('click', clearChat)
 
     tabChat.addEventListener('click', function () { switchTab('chat') })
     tabSkin.addEventListener('click', function () { switchTab('skin') })
@@ -358,10 +409,39 @@
   function togglePanel () { setOpen(panel.hidden) }
 
   // —— 消息渲染 ——
+
+  /**
+   * 把回复里的链接变成可点的。
+   * 注意：**不能**用 innerHTML —— 那是模型输出的内容，等于给自己开一个 XSS 口子。
+   * 这里按 URL 切开，剩下的部分一律用 createTextNode 拼上去。
+   */
+  var LINK_RE = /(https?:\/\/[^\s，。！？；：'"）)】\]]+|\/posts\/[A-Za-z0-9]+\.html?)/g
+
+  function fillBubble (bubble, text) {
+    var parts = String(text).split(LINK_RE)
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i]
+      if (!part) continue
+      if (LINK_RE.test(part) && /^(https?:\/\/|\/posts\/)/.test(part)) {
+        LINK_RE.lastIndex = 0
+        var a = document.createElement('a')
+        a.textContent = part
+        a.href = part
+        a.target = '_blank'
+        a.rel = 'noopener noreferrer'
+        bubble.appendChild(a)
+      } else {
+        LINK_RE.lastIndex = 0
+        bubble.appendChild(document.createTextNode(part))
+      }
+    }
+  }
+
   function addMsg (role, text) {
     var row = el('div', 'lks-pet-msg lks-pet-msg-' + role)
     var bubble = el('div', 'lks-pet-bubble')
-    bubble.textContent = text
+    if (role === 'assistant') fillBubble(bubble, text)
+    else bubble.textContent = text
     row.appendChild(bubble)
     msgsBox.appendChild(row)
     msgsBox.scrollTop = msgsBox.scrollHeight
@@ -392,10 +472,15 @@
     typing.hidden = false
     form.classList.add('lks-pet-busy')
 
+    // 记下这次请求属于哪一段对话：如果期间用户点了"清空"，
+    // 回来的回复（或报错）就不该再插进新会话里
+    var sessionAtSend = currentSession()
+
     send(text).then(function (reply) {
       typing.hidden = true
       form.classList.remove('lks-pet-busy')
       sending = false
+      if (currentSession() !== sessionAtSend) return
       addMsg('assistant', reply)
       history.push({ role: 'assistant', content: reply })
       saveHistory()
@@ -403,6 +488,7 @@
       typing.hidden = true
       form.classList.remove('lks-pet-busy')
       sending = false
+      if (currentSession() !== sessionAtSend) return
       tip.textContent = friendlyError(err)
     })
   }
@@ -479,6 +565,7 @@
     open: function () { setOpen(true) },
     close: function () { setOpen(false) },
     send: send,
+    clear: clearChat,
     history: function () { return history }
   }
 })()
