@@ -20,15 +20,6 @@
   </url>
   
   <url>
-    <loc>https://lksme.dpdns.org/img/manifest.json</loc>
-    
-    <lastmod>2026-09-11</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://lksme.dpdns.org/posts/93fdbfcd.html</loc>
     
     <lastmod>2026-09-11</lastmod>
@@ -57,6 +48,15 @@
   
   <url>
     <loc>https://lksme.dpdns.org/categories/index.html</loc>
+    
+    <lastmod>2026-09-11</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://lksme.dpdns.org/img/manifest.json</loc>
     
     <lastmod>2026-09-11</lastmod>
     
@@ -144,13 +144,6 @@
   </url>
   
   <url>
-    <loc>https://lksme.dpdns.org/tags/Hexo/</loc>
-    <lastmod>2026-09-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://lksme.dpdns.org/tags/Cloudflare/</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
@@ -179,6 +172,13 @@
   </url>
   
   <url>
+    <loc>https://lksme.dpdns.org/tags/Hexo/</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://lksme.dpdns.org/tags/%E8%AF%84%E8%AE%BA%E7%B3%BB%E7%BB%9F/</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
@@ -188,14 +188,14 @@
 
   
   <url>
-    <loc>https://lksme.dpdns.org/categories/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/</loc>
+    <loc>https://lksme.dpdns.org/categories/%E7%AB%99%E7%82%B9/</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://lksme.dpdns.org/categories/%E7%AB%99%E7%82%B9/</loc>
+    <loc>https://lksme.dpdns.org/categories/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
