@@ -160,27 +160,6 @@
   </url>
   
   <url>
-    <loc>https://lksme.dpdns.org/tags/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/</loc>
-    <lastmod>2026-09-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://lksme.dpdns.org/tags/%E7%BD%91%E7%BB%9C/</loc>
-    <lastmod>2026-09-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://lksme.dpdns.org/tags/Cloudflare/</loc>
-    <lastmod>2026-09-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://lksme.dpdns.org/tags/hexo/</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
@@ -196,6 +175,27 @@
   
   <url>
     <loc>https://lksme.dpdns.org/tags/%E7%BE%8E%E5%8C%96/</loc>
+    <lastmod>2026-09-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://lksme.dpdns.org/tags/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/</loc>
+    <lastmod>2026-09-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://lksme.dpdns.org/tags/%E7%BD%91%E7%BB%9C/</loc>
+    <lastmod>2026-09-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://lksme.dpdns.org/tags/Cloudflare/</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

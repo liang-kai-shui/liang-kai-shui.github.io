@@ -36,21 +36,17 @@
   // 特效的透明度，1 是库的默认值。觉得太抢眼可以降到 0.7 左右。
   var OPACITY = 0.9
 
+  // 特效的主题色。**故意写死，不去读 CSS 变量**：
+  // 主题的 --btn-bg 在浅色模式下是站上那个蓝 #49b1f5（正合适），但深色模式下是 #1f1f1f 的深灰，
+  // 拿它当特效色的话圆环在深色底上基本看不见（实测被这个坑了一下）。
+  // 这个蓝在两个模式下都成立，也跟按钮、链接的颜色一致。
+  var THEME_COLOR = '#49b1f5'
+
   function reducedMotion () {
     try {
       return window.matchMedia('(prefers-reduced-motion: reduce)').matches
     } catch (e) {
       return false
-    }
-  }
-
-  /** 主题色能读出来就用主题色（和按钮、链接一致），读不到就用库默认的游戏蓝 */
-  function themeColor () {
-    try {
-      var c = getComputedStyle(document.documentElement).getPropertyValue('--btn-bg').trim()
-      return /^#[0-9a-fA-F]{6}$/.test(c) ? c : ''
-    } catch (e) {
-      return ''
     }
   }
 
@@ -72,9 +68,7 @@
       })
 
       fx.updateConfig({ trailAlways: TRAIL_ALWAYS, opacity: OPACITY })
-
-      var color = themeColor()
-      if (color) fx.setThemeColor(color)
+      fx.setThemeColor(THEME_COLOR)
 
       // pjax 站内跳转不重建实例：#page 之外的东西不会被换掉，画布留着就行。
       // 万一哪天主题换成整页替换，这里重新初始化一次即可。
