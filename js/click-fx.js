@@ -31,7 +31,7 @@
 
   // 拖尾常显还是按住才显示。true = 鼠标一动就有拖尾（库的招牌效果），
   // 觉得晃眼就改成 false，那样只有按住指针拖的时候才出拖尾。
-  var TRAIL_ALWAYS = true
+  var TRAIL_ALWAYS = false
 
   // 特效的透明度，1 是库的默认值。觉得太抢眼可以降到 0.7 左右。
   var OPACITY = 0.9
