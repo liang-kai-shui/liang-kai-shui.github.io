@@ -72,6 +72,19 @@
     if (el) el.textContent = value
   }
 
+  function showPrivacyLink () {
+    var footer = document.getElementById('footer-wrap')
+    if (!footer || document.getElementById('lks-privacy-link')) return
+    var line = document.createElement('p')
+    line.id = 'lks-privacy-link'
+    line.style.cssText = 'margin:6px 0 0;font-size:12px;opacity:.8'
+    var a = document.createElement('a')
+    a.href = '/privacy/'
+    a.textContent = '访问统计与隐私说明'
+    line.appendChild(a)
+    footer.appendChild(line)
+  }
+
   function localHearts () {
     try { return JSON.parse(localStorage.getItem(HEART_KEY) || '{}') } catch (e) { return {} }
   }
@@ -89,10 +102,12 @@
 
   function countView () {
     var path = currentPath()
+    var referrerHost = ''
+    try { if (document.referrer) referrerHost = new URL(document.referrer).hostname } catch (e) {}
     api('/api/pv', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ path: path })
+      body: JSON.stringify({ path: path, referrerHost: referrerHost })
     })
       .then(function (data) { fill('busuanzi_value_page_pv', data.views) })
       .catch(function (err) {
@@ -204,6 +219,7 @@
   /* ------------------------- 初始化 ------------------------- */
 
   function init () {
+    showPrivacyLink()
     countView()
     renderReactions()
   }

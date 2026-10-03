@@ -111,6 +111,23 @@
   function render (root) {
     root.innerHTML = ''
     root.appendChild(buildForm(root))
+    var listHead = el('div', 'lks-list-head')
+    var listTitle = el('h3', 'lks-list-title', state.path === '/comments/' ? '大家说了什么' : '评论区')
+    var listCount = el('span', 'lks-list-count', '0 条')
+    listHead.append(listTitle, listCount)
+    root.appendChild(listHead)
+    var listStatus = el('div', 'lks-list-status')
+    listStatus.setAttribute('role', 'status')
+    var statusText = el('span', 'lks-list-status-text')
+    var retry = el('button', 'lks-retry', '重新加载')
+    retry.type = 'button'
+    retry.hidden = true
+    retry.addEventListener('click', function () {
+      state.page = 1
+      load(root, false)
+    })
+    listStatus.append(statusText, retry)
+    root.appendChild(listStatus)
     var listBox = el('div', 'lks-list')
     root.appendChild(listBox)
     var footer = el('div', 'lks-footer')
@@ -125,25 +142,52 @@
     root.appendChild(footer)
     state.listBox = listBox
     state.moreBtn = more
+    state.listStatusEl = listStatus
+    state.listStatusTextEl = statusText
+    state.retryBtn = retry
+    state.listCountEl = listCount
   }
 
   function buildForm (root) {
     var meta = getMeta()
     var form = el('form', 'lks-form')
+    var isGuestbook = state.path === '/comments/'
+    var intro = el('div', 'lks-form-intro')
+    intro.append(
+      el('h3', 'lks-form-title', isGuestbook ? '在这里留个言' : '聊聊这篇文章'),
+      el('p', 'lks-form-desc', isGuestbook ? '想聊什么都行，写完直接发在下面。' : '有想法或发现哪里不对，欢迎在这里说。')
+    )
 
     var row = el('div', 'lks-row')
     var nick = el('input', 'lks-input')
-    nick.type = 'text'; nick.placeholder = '昵称 *'; nick.maxLength = 30; nick.value = meta.nick || ''
+    nick.type = 'text'; nick.placeholder = '怎么称呼你'; nick.maxLength = 30; nick.value = meta.nick || ''
+    nick.autocomplete = 'nickname'
     var mail = el('input', 'lks-input')
-    mail.type = 'email'; mail.placeholder = '邮箱（选填，不会公开）'; mail.maxLength = 100; mail.value = meta.mail || ''
+    mail.type = 'email'; mail.placeholder = '可不填，不会公开'; mail.maxLength = 100; mail.value = meta.mail || ''
+    mail.autocomplete = 'email'
     var link = el('input', 'lks-input')
-    link.type = 'url'; link.placeholder = '网址（选填）'; link.maxLength = 200; link.value = meta.link || ''
-    row.append(nick, mail, link)
+    link.type = 'url'; link.placeholder = 'https://'; link.maxLength = 200; link.value = meta.link || ''
+    link.autocomplete = 'url'
+    var nickLabel = el('label', 'lks-field')
+    nickLabel.append(el('span', 'lks-field-name', '昵称 · 必填'), nick)
+    row.appendChild(nickLabel)
+    var extras = el('details', 'lks-extras')
+    if (meta.mail || meta.link) extras.open = true
+    extras.appendChild(el('summary', '', '邮箱和个人网站（选填）'))
+    var extraRow = el('div', 'lks-extra-row')
+    var mailLabel = el('label', 'lks-field')
+    mailLabel.append(el('span', 'lks-field-name', '邮箱 · 不会公开'), mail)
+    var linkLabel = el('label', 'lks-field')
+    linkLabel.append(el('span', 'lks-field-name', '个人网站'), link)
+    extraRow.append(mailLabel, linkLabel)
+    extras.appendChild(extraRow)
 
     var content = el('textarea', 'lks-textarea')
-    content.placeholder = '说点什么吧～ 支持换行，别发广告哦'
+    content.placeholder = isGuestbook ? '给小窝留句话吧…' : '关于这篇文章，你想说什么？'
     content.maxLength = 2000
     content.rows = 4
+    var contentLabel = el('label', 'lks-field lks-content-field')
+    contentLabel.append(el('span', 'lks-field-name', (isGuestbook ? '留言内容' : '评论内容') + ' · 必填'), content)
 
     // 蜜罐：真人看不见，机器人爱填
     var hp = el('input', 'lks-hp')
@@ -156,18 +200,32 @@
 
     var actions = el('div', 'lks-actions')
     var msg = el('span', 'lks-msg')
-    var submit = el('button', 'lks-submit', '发表评论')
+    msg.setAttribute('role', 'status')
+    msg.setAttribute('aria-live', 'polite')
+    var submit = el('button', 'lks-submit', isGuestbook ? '发布留言' : '发表评论')
     submit.type = 'submit'
     actions.append(msg, submit)
 
-    form.append(row, content, hp, emojiBar(content), turnstileBox, replyBar, actions)
+    var tools = el('div', 'lks-form-tools')
+    var counter = el('span', 'lks-counter', '0 / 2000')
+    content.addEventListener('input', function () { counter.textContent = content.value.length + ' / 2000' })
+    tools.append(emojiBar(content), counter)
+    form.append(intro, replyBar, contentLabel, tools, row, extras, hp, turnstileBox, actions)
 
     state.msgEl = msg
     state.replyBar = replyBar
+    state.contentEl = content
+    state.contentPlaceholder = content.placeholder
 
     form.addEventListener('submit', function (e) {
       e.preventDefault()
       submitComment(root, { nick: nick, mail: mail, link: link, content: content, hp: hp, submit: submit })
+    })
+    content.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault()
+        form.requestSubmit()
+      }
     })
 
     nick.addEventListener('change', remember)
@@ -184,9 +242,9 @@
 
   // 表情 / 颜文字选择器：插到光标位置（没点过输入框就追加到末尾）
   var EMOJI_GROUPS = [
-    ['😄', '😂', '🤣', '😊', '😍', '🤔', '😅', '🙃', '😭', '😴', '🥲', '😎'],
-    ['👍', '👏', '🙏', '💪', '🎉', '🔥', '✨', '☕', '🐟', '🌙', '🍜', '🎮'],
-    ['(๑•̀ㅂ•́)و✧', '(｡•́︿•̀｡)', '(*/ω＼*)', '(╯°□°)╯', 'ヾ(≧▽≦*)o', '(๑´ㅂ`๑)']
+    ['😄', '😂', '🤣', '😊', '😍', '🤔', '😅', '🙃', '😭', '😴', '🥲', '😎', '🙂', '🥹', '🥺', '😮', '😤', '😡', '🫠', '👀'],
+    ['👍', '👏', '🙏', '💪', '🎉', '🔥', '✨', '☕', '🐟', '🌙', '🍜', '🎮', '❤️', '💯', '🫶', '🤝', '🙌', '🎂', '🌸', '💡'],
+    ['(๑•̀ㅂ•́)و✧', '(｡•́︿•̀｡)', '(*/ω＼*)', '(╯°□°)╯', 'ヾ(≧▽≦*)o', '(๑´ㅂ`๑)', '(￣▽￣)／', '(´･ω･`)', '( •̀ ω •́ )✧']
   ]
 
   function emojiBar (textarea) {
@@ -262,8 +320,8 @@
     state.msgEl.className = 'lks-msg' + (type ? ' lks-msg-' + type : '')
   }
 
-  function buildItem (root, c) {
-    var item = el('div', 'lks-item')
+  function buildItem (root, c, isReply) {
+    var item = el('div', 'lks-item' + (isReply ? ' lks-item-reply' : ''))
     item.setAttribute('data-id', String(c.id))
 
     var ava = el('div', 'lks-avatar', (c.nick || '?').trim().charAt(0).toUpperCase())
@@ -311,12 +369,38 @@
 
   function renderList () {
     var box = state.listBox
+    var root = document.getElementById(CONTAINER_ID)
     box.innerHTML = ''
     if (!state.comments.length) {
-      box.appendChild(el('div', 'lks-empty', '还没有人留言，来做第一个吧～'))
+      box.appendChild(el('div', 'lks-empty', state.path === '/comments/' ? '还没有留言，来做第一个吧。' : '还没有评论，聊聊你的看法吧。'))
       return
     }
-    for (var i = 0; i < state.comments.length; i++) box.appendChild(buildItem(state.listBox, state.comments[i]))
+    // API 按新到旧返回；把同一串对话放在一起，根评论在前，回复接在下面。
+    var groups = []
+    var byId = Object.create(null)
+    state.comments.forEach(function (c) {
+      var key = String(c.rid || c.id)
+      if (!byId[key]) {
+        byId[key] = { root: null, replies: [] }
+        groups.push(byId[key])
+      }
+      if (c.pid) byId[key].replies.push(c)
+      else byId[key].root = c
+    })
+    groups.forEach(function (group) {
+      var thread = el('div', 'lks-thread')
+      if (group.root) thread.appendChild(buildItem(root, group.root, false))
+      group.replies.slice().reverse().forEach(function (c) {
+        thread.appendChild(buildItem(root, c, !!group.root))
+      })
+      box.appendChild(thread)
+    })
+  }
+
+  function clearReply () {
+    state.replyTo = null
+    if (state.replyBar) state.replyBar.style.display = 'none'
+    if (state.contentEl) state.contentEl.placeholder = state.contentPlaceholder
   }
 
   function startReply (root, c) {
@@ -329,14 +413,16 @@
         var cancel = el('button', 'lks-op', '取消')
         cancel.type = 'button'
         cancel.addEventListener('click', function () {
-          state.replyTo = null
-          state.replyBar.style.display = 'none'
+          clearReply()
         })
         return cancel
       })()
     )
     var ta = root.querySelector('.lks-textarea')
-    if (ta) ta.focus()
+    if (ta) {
+      ta.placeholder = '回复 @' + c.nick + '…'
+      ta.focus()
+    }
   }
 
   function removeComment (root, c, btn) {
@@ -347,6 +433,7 @@
         state.comments = state.comments.filter(function (x) { return x.id !== c.id })
         state.total = Math.max(0, state.total - 1)
         renderList()
+        updateHeadline()
         setMsg('已删除', 'ok')
       })
       .catch(function (err) {
@@ -360,6 +447,7 @@
   }
 
   function submitComment (root, fields) {
+    if (fields.submit.disabled) return
     var nick = fields.nick.value.trim()
     var content = fields.content.value.trim()
     if (!nick) { setMsg('昵称别空着呀～', 'err'); fields.nick.focus(); return }
@@ -390,14 +478,15 @@
       .then(function (data) {
         saveMeta({ nick: nick, mail: payload.mail, link: payload.link })
         fields.content.value = ''
-        state.replyTo = null
-        state.replyBar.style.display = 'none'
+        fields.content.dispatchEvent(new Event('input', { bubbles: true }))
+        clearReply()
         if (data.pending) {
           setMsg('已提交，等站长审核后就会显示 ✅', 'ok')
         } else if (data.comment) {
           state.comments.unshift(data.comment)
           state.total += 1
           renderList()
+          updateHeadline()
           setMsg('发表成功 🎉', 'ok')
         }
         if (window.turnstile && CFG.turnstileSiteKey) {
@@ -412,23 +501,35 @@
   function load (root, append) {
     if (state.loading) return
     state.loading = true
-    if (!append) setMsg('加载评论中…')
+    state.retryBtn.hidden = true
+    state.listStatusTextEl.textContent = append ? '' : (state.path === '/comments/' ? '正在加载留言…' : '正在加载评论…')
+    state.moreBtn.disabled = true
+    state.moreBtn.textContent = '加载中…'
     api('/api/comments?path=' + encodeURIComponent(state.path) + '&page=' + state.page + '&pageSize=' + PAGE_SIZE)
       .then(function (data) {
         state.total = data.total
         state.comments = append ? state.comments.concat(data.comments) : data.comments
         renderList()
         state.moreBtn.style.display = data.hasMore ? '' : 'none'
-        if (!append) setMsg('')
+        state.listStatusTextEl.textContent = ''
         updateHeadline()
       })
-      .catch(function (err) { setMsg('评论加载失败：' + err.message, 'err') })
-      .then(function () { state.loading = false })
+      .catch(function () {
+        if (append) state.page = Math.max(1, state.page - 1)
+        state.listStatusTextEl.textContent = (state.path === '/comments/' ? '留言' : '评论') + '暂时没加载出来，请稍后重试。'
+        state.retryBtn.hidden = false
+      })
+      .then(function () {
+        state.loading = false
+        state.moreBtn.disabled = false
+        state.moreBtn.textContent = '加载更多'
+      })
   }
 
   function updateHeadline () {
     var head = document.querySelector('#post-comment .comment-headline span')
-    if (head) head.textContent = ' 评论' + (state.total ? '（' + state.total + '）' : '')
+    if (head) head.textContent = (state.path === '/comments/' ? ' 留言' : ' 评论') + (state.total ? '（' + state.total + '）' : '')
+    if (state.listCountEl) state.listCountEl.textContent = state.total + ' 条'
   }
 
   function init () {
@@ -440,6 +541,7 @@
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
     loadCSS('/css/comment.css')
     render(root)
+    updateHeadline()
     load(root, false)
   }
 
