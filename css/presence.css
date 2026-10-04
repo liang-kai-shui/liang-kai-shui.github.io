@@ -1,0 +1,60 @@
+/* 共读状态跟着文章信息走，不悬浮，也不覆盖正文。 */
+.lks-presence {
+  display: inline-block;
+  margin-top: 9px;
+}
+.lks-presence[hidden] { display: none; }
+.lks-presence-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid rgba(128, 128, 128, .24);
+  border-radius: 999px;
+  background: rgba(127, 127, 127, .1);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  cursor: pointer;
+}
+.lks-presence-toggle:focus-visible { outline: 2px solid #58c7ff; outline-offset: 2px; }
+#page-header.post-bg .lks-presence-toggle {
+  border-color: rgba(255, 255, 255, .28);
+  background: rgba(0, 0, 0, .4);
+  color: #fff;
+}
+.lks-presence-indicator {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #58c7ff;
+}
+.lks-presence-panel {
+  position: fixed;
+  z-index: 9999;
+  width: min(235px, calc(100vw - 24px));
+  padding: 13px 14px;
+  border: 1px solid rgba(128, 128, 128, .28);
+  border-radius: 12px;
+  background: var(--card-bg, #fff);
+  color: var(--font-color, #333);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .2);
+  text-align: left;
+  font-size: 13px;
+}
+.lks-presence-panel[hidden] { display: none; }
+.lks-presence-panel strong { display: block; margin-bottom: 9px; }
+.lks-presence-panel small { display: block; margin-top: 8px; opacity: .75; }
+.lks-presence-panel p { margin: 9px 0 0; line-height: 1.5; opacity: .75; }
+.lks-presence-dots { display: flex; flex-wrap: wrap; gap: 7px; min-height: 13px; }
+.lks-presence-dots i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #58c7ff;
+}
+.lks-presence-dots i:nth-child(even) { opacity: .68; }
