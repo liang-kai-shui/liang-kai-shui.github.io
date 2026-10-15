@@ -309,7 +309,13 @@ btf.addGlobalFn('pjaxSend', () => {
         url: e.path + '#post-comment',
         date: e.created_at * 1000
       }))
-      btf.saveToLocal.set(keyName, JSON.stringify(list), 10/(60*24))
+      // 空结果不写缓存（2026-10-15 修）。
+      // 原来无论如何都写：于是"暂时没有评论"会被当成有效结果缓存 storage 分钟，
+      // 而下面 newestCommentInit 只要读到缓存就直接渲染、**不再请求** ——
+      // 结果是卡片空着整个缓存窗口，期间来了新评论也不刷新
+      // （端到端测试就是这么挂的：发完评论去 /comments/，卡片里还是「还没有新留言」）。
+      // 非空照旧缓存，代价只是"站里一条评论都没有"时每次进页面多一次请求。
+      if (list.length) btf.saveToLocal.set(keyName, JSON.stringify(list), 10/(60*24))
       generateHtml(list, ele)
     } catch (err) {
       console.error(err)
