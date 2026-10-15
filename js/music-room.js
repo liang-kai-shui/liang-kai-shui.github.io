@@ -138,7 +138,20 @@
       if (index === lyricIndex) node.setAttribute('aria-current', 'true'); else node.removeAttribute('aria-current')
     })
     var active = track.children[selected]
-    if (active) track.style.transform = 'translateY(' + (view.clientHeight / 2 - active.offsetTop - active.offsetHeight / 2) + 'px)'
+    if (active) {
+      var viewH = view.clientHeight
+      var trackH = track.offsetHeight
+      // 默认是"当前句居中"（歌词流过视口的效果）。但整段歌词比视口矮的时候
+      // ——纯音乐、短歌词，往往就三四句——把当前句居中会把整块歌词推到下半部分，
+      // 上面空出一大片，看着像卡片被拉长了、歌词从下面才开始（用户报的就是这个）。
+      // 所以：歌词比视口矮 → 整块居中，上下留白对称；
+      //       比视口高 → 仍然是当前句居中，只把位移夹在可视范围内，
+      //                  开头别在上面留白、结尾别在下面留白。
+      var shift = viewH / 2 - active.offsetTop - active.offsetHeight / 2
+      if (trackH <= viewH) shift = (viewH - trackH) / 2
+      else shift = Math.min(0, Math.max(viewH - trackH, shift))
+      track.style.transform = 'translateY(' + shift + 'px)'
+    }
   }
   function renderQueue () {
     if (!room || !room.isConnected) return
