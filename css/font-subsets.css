@@ -1,0 +1,112 @@
+/* 原站 ZhuZiAWan 同字形分片，浏览器只请求当前文本需要的片段。 */
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/00-14ae808768.woff2') format('woff2');unicode-range:U+1D,U+20-7E,U+A1-FF,U+101,U+113,U+11B,U+12B,U+144,U+148,U+14D,U+16B,U+1CE,U+1D0,U+1D2,U+1D4,U+1D6,U+1D8,U+1DA,U+1DC,U+1F9,U+251,U+261,U+2C7,U+2C9-2CB}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/01-f69da89944.woff2') format('woff2');unicode-range:U+3001,U+4E00,U+4E09,U+4E0D,U+4E22,U+4E24,U+4E2A,U+4E2D,U+4E49,U+4E50,U+4E86,U+4E8E,U+4EE3,U+4EEC,U+4EFD,U+4F55,U+4FA7,U+4FEE,U+5168,U+5173,U+5199,U+51C9,U+5206,U+52A0,U+53C8,U+53CB,U+53F0,U+540E,U+548C,U+56DE,U+56FE,U+5708,U+5728,U+5883,U+5929,U+5982,U+5A18,U+5B50,U+5B83,U+5BBF,U+5C01,U+5C0F,U+5E26,U+5E95,U+5EFA,U+5F00,U+5F52,U+5F55,U+5F71,U+627E,U+6298,U+6309,U+641C,U+6478,U+6587,U+65B0,U+662F,U+6709,U+671F,U+672C,U+6765,U+677F,U+6807,U+680F,U+6863,U+6C34,U+6D3B,U+6DFB,U+6E90,U+7136,U+73AF,U+751F,U+7535,U+7559,U+756A,U+7684,U+76F4,U+770B,U+7801,U+7A7A,U+7A9D,U+7AD9,U+7AE0,U+7B2C,U+7B7E,U+7C7B,U+7CFB,U+7D22,U+7EC8,U+7EDF,U+7F16,U+7F51,U+7F6E,U+804A,U+80FD,U+817E,U+81EA,U+820D,U+8A00,U+8BB0,U+8BB2,U+8BBA,U+8BC4,U+8BD1,U+8F6C,U+8FB9,U+8FD1,U+8FD8,U+8FFD,U+90E8,U+914D,U+949F,U+94AE,U+94FE,U+9762,U+97F3,U+9875,U+9996,U+9C7C,U+FF0C,U+FF1A}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/02-56e173374b.woff2') format('woff2');unicode-range:U+391-3A1,U+3A3-3A9,U+3B1-3C1,U+3C3-3C9,U+401,U+410-44F,U+451,U+1E3F,U+2013-2014,U+2016,U+2018-2019,U+201C-201D,U+2022,U+2026,U+2030,U+2032-2033,U+2039-203C,U+203E,U+2044,U+2074-2075,U+2077-2078,U+207F,U+20A0-20AF,U+2103,U+2105,U+2109,U+2113,U+2116,U+2121-2122,U+2126,U+212E,U+215B-215E,U+2160-216B,U+2170-2179,U+2190-2193,U+2196-2199,U+2202,U+2206,U+2208,U+220F,U+2211-2212,U+2215,U+2219-221A,U+221D-2220,U+2223,U+2225,U+2227-222B,U+222E,U+2234-2237,U+223C-223D,U+2248,U+224C,U+2252,U+2260-2261,U+2264-2267,U+226E-226F,U+2295,U+2299,U+22A5,U+22BF,U+2312,U+2460-2469,U+2474-2479}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/03-5e1593ffe4.woff2') format('woff2');unicode-range:U+247A-249B,U+2500-254B,U+25A0-25A1,U+25B2-25B3,U+25C6-25C7,U+25CB,U+25CE-25CF,U+2605-2606,U+2609,U+2640,U+2642,U+3000,U+3002-3011,U+3013-3017,U+3041-3093,U+30A1-30BB}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/04-5b60b8b107.woff2') format('woff2');unicode-range:U+30BC-30F6,U+3105-3129,U+3220-3229,U+3231,U+32A3,U+338E-338F,U+339C-339E,U+33A1,U+33C4,U+33CE,U+33D1-33D2,U+33D5,U+359E,U+360E,U+3A18,U+3B74,U+3FA6,U+40DA,U+415F,U+41F2,U+43AC,U+43F2,U+44D6,U+45AC,U+45EA,U+497A,U+4986,U+4C9F,U+4E01-4E08,U+4E0A-4E0C,U+4E0E-4E21,U+4E23,U+4E25-4E29,U+4E2B-4E2C,U+4E2E-4E48,U+4E4A-4E4F,U+4E51-4E81}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/05-ee2d0b1b4c.woff2') format('woff2');unicode-range:U+4E82-4E85,U+4E87-4E8D,U+4E8F-4EE2,U+4EE4-4EEB,U+4EED-4EFC,U+4EFE-4F54,U+4F56-4F87}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/06-7ebb74d738.woff2') format('woff2');unicode-range:U+4F88-4FA6,U+4FA8-4FED,U+4FEF-5089}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/07-875f1b0410.woff2') format('woff2');unicode-range:U+508A-5167,U+5169-5172,U+5174-518B}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/08-4460e04d58.woff2') format('woff2');unicode-range:U+518C-5198,U+519A-51C8,U+51CA-5205,U+5207-528E}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/09-3e73030ba8.woff2') format('woff2');unicode-range:U+528F-529F,U+52A1-538F}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/10-e5fe654761.woff2') format('woff2');unicode-range:U+5390-53C7,U+53C9-53CA,U+53CC-53EF,U+53F1-540D,U+540F-548B,U+548D-5494}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/11-49c250d85e.woff2') format('woff2');unicode-range:U+5495-5594}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/12-282f13c075.woff2') format('woff2');unicode-range:U+5595-5694}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/13-faa64a6ad9.woff2') format('woff2');unicode-range:U+5695-56DD,U+56DF-56FD,U+56FF-5707,U+5709-5727,U+5729-5798}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/14-f80b19dabd.woff2') format('woff2');unicode-range:U+5799-5882,U+5884-5899}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/15-2866f69a6e.woff2') format('woff2');unicode-range:U+589A-5928,U+592A-5981,U+5983-599B}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/16-448ccc0394.woff2') format('woff2');unicode-range:U+599C-5A17,U+5A19-5A9C}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/17-3d5b66d936.woff2') format('woff2');unicode-range:U+5A9D-5B4F,U+5B51,U+5B53-5B82,U+5B84-5B9F}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/18-3c7ef6f325.woff2') format('woff2');unicode-range:U+5BA0-5BBE,U+5BC0-5C00,U+5C02-5C0E,U+5C10-5CA2}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/19-b5b17ddd26.woff2') format('woff2');unicode-range:U+5CA3-5DA2}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/20-9bef7e9243.woff2') format('woff2');unicode-range:U+5DA3-5E25,U+5E27-5E94,U+5E96-5EA4}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/21-53dce7bdfe.woff2') format('woff2');unicode-range:U+5EA5-5EF9,U+5EFB-5EFF,U+5F01-5F51,U+5F53-5F54,U+5F56-5F70,U+5F72-5FA9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/22-022aee2a99.woff2') format('woff2');unicode-range:U+5FAA-60A9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/23-fead77e200.woff2') format('woff2');unicode-range:U+60AA-61A9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/24-0bedb9450e.woff2') format('woff2');unicode-range:U+61AA-627D,U+627F-6297,U+6299-62AB}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/25-1f80357221.woff2') format('woff2');unicode-range:U+62AC-6308,U+630A-63AC}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/26-e83d53b1b4.woff2') format('woff2');unicode-range:U+63AD-641B,U+641D-6477,U+6479-64AE}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/27-d9eef759f9.woff2') format('woff2');unicode-range:U+64AF-6586,U+6588-65AF}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/28-6ab136ed42.woff2') format('woff2');unicode-range:U+65B1-662E,U+6630-66B1}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/29-c66c045dfe.woff2') format('woff2');unicode-range:U+66B2-6708,U+670A-671E,U+6720-672B,U+672D-6764,U+6766-677E,U+6780-67B6}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/30-4ffc8bcb34.woff2') format('woff2');unicode-range:U+67B7-6806,U+6808-680E,U+6810-6862,U+6864-68B9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/31-de1f415954.woff2') format('woff2');unicode-range:U+68BA-69B9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/32-6f59644c8e.woff2') format('woff2');unicode-range:U+69BA-6AB9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/33-23f5d35af5.woff2') format('woff2');unicode-range:U+6ABA-6BB9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/34-797f05ce17.woff2') format('woff2');unicode-range:U+6BBA-6C33,U+6C35-6CBA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/35-85483765ae.woff2') format('woff2');unicode-range:U+6CBB-6D3A,U+6D3C-6DBB}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/36-193e01659c.woff2') format('woff2');unicode-range:U+6DBC-6DFA,U+6DFC-6E8F,U+6E91-6EBD}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/37-b7a59597d2.woff2') format('woff2');unicode-range:U+6EBE-6FBD}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/38-b40017feb6.woff2') format('woff2');unicode-range:U+6FBE-70BD}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/39-ca231d95bb.woff2') format('woff2');unicode-range:U+70BE-7135,U+7137-71BE}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/40-0ec063c463.woff2') format('woff2');unicode-range:U+71BF-72BE}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/41-566555ec82.woff2') format('woff2');unicode-range:U+72BF-73AE,U+73B0-73BF}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/42-ba8f3587ff.woff2') format('woff2');unicode-range:U+73C0-74BF}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/43-d641758cc8.woff2') format('woff2');unicode-range:U+74C0-751E,U+7520-7534,U+7536-7558,U+755A-7569,U+756B-75C3}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/44-0162fb7f1a.woff2') format('woff2');unicode-range:U+75C4-7683,U+7685-76C4}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/45-cf444dba08.woff2') format('woff2');unicode-range:U+76C5-76F3,U+76F5-770A,U+770C-77C6}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/46-38436ef5df.woff2') format('woff2');unicode-range:U+77C7-7800,U+7802-78C7}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/47-57edea54cc.woff2') format('woff2');unicode-range:U+78C8-79C7}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/48-07029c509c.woff2') format('woff2');unicode-range:U+79C8-7A79,U+7A7B-7A9C,U+7A9E-7AC9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/49-5d95282d63.woff2') format('woff2');unicode-range:U+7ACA-7AD8,U+7ADA-7ADF,U+7AE1-7B2B,U+7B2D-7B7D,U+7B7F-7BCD}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/50-5d099c4daf.woff2') format('woff2');unicode-range:U+7BCE-7C7A,U+7C7C-7CCE}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/51-386a6951f8.woff2') format('woff2');unicode-range:U+7CCF-7CFA,U+7CFC-7D21,U+7D23-7DD0}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/52-2af11565a6.woff2') format('woff2');unicode-range:U+7DD1-7EC7,U+7EC9-7ED1}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/53-ec65c7217a.woff2') format('woff2');unicode-range:U+7ED2-7EDE,U+7EE0-7F15,U+7F17-7F50,U+7F52-7F6D,U+7F6F-7FD5}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/54-61191cebbd.woff2') format('woff2');unicode-range:U+7FD6-8049,U+804B-80D6}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/55-687db2ddde.woff2') format('woff2');unicode-range:U+80D7-80FC,U+80FE-817D,U+817F-81D8}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/56-f760490e84.woff2') format('woff2');unicode-range:U+81D9-81E9,U+81EB-820C,U+820E-82DA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/57-ac62a859bf.woff2') format('woff2');unicode-range:U+82DB-83DA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/58-e0970e2941.woff2') format('woff2');unicode-range:U+83DB-84DA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/59-a1378e3fa1.woff2') format('woff2');unicode-range:U+84DB-85DA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/60-15c9ff8ffb.woff2') format('woff2');unicode-range:U+85DB-86DA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/61-a547346796.woff2') format('woff2');unicode-range:U+86DB-87DA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/62-901898ef74.woff2') format('woff2');unicode-range:U+87DB-88DA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/63-679f39d188.woff2') format('woff2');unicode-range:U+88DB-89DA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/64-9b36176b5f.woff2') format('woff2');unicode-range:U+89DB-89FF,U+8A01-8ADB}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/65-107d09def1.woff2') format('woff2');unicode-range:U+8ADC-8BAF,U+8BB1,U+8BB3-8BB9,U+8BBB-8BC3,U+8BC5-8BD0,U+8BD2-8BE0}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/66-0adfb293e2.woff2') format('woff2');unicode-range:U+8BE1-8CE0}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/67-f5def55acc.woff2') format('woff2');unicode-range:U+8CE1-8DE0}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/68-1bda77fcfe.woff2') format('woff2');unicode-range:U+8DE1-8EE0}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/69-535ca4293c.woff2') format('woff2');unicode-range:U+8EE1-8F6B,U+8F6D-8FB8,U+8FBA-8FD0,U+8FD2-8FD7,U+8FD9-8FE4}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/70-2ab567590b.woff2') format('woff2');unicode-range:U+8FE5-8FFC,U+8FFE-90E5}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/71-0ac76497d0.woff2') format('woff2');unicode-range:U+90E6-90E7,U+90E9-914C,U+914E-91E7}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/72-00e614ceca.woff2') format('woff2');unicode-range:U+91E8-92E7}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/73-3cf19d9f9d.woff2') format('woff2');unicode-range:U+92E8-93E7}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/74-579a2454ce.woff2') format('woff2');unicode-range:U+93E8-949E,U+94A0-94AD,U+94AF-94E9}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/75-dc669cf88e.woff2') format('woff2');unicode-range:U+94EA-94FD,U+94FF-95EA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/76-0c7fa7a113.woff2') format('woff2');unicode-range:U+95EB-96EA}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/77-e990c6ad95.woff2') format('woff2');unicode-range:U+96EB-9761,U+9763-97EB}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/78-5bfee083fb.woff2') format('woff2');unicode-range:U+97EC-97F2,U+97F4-9874,U+9876-98ED}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/79-9a460022a5.woff2') format('woff2');unicode-range:U+98EE-9995,U+9997-99EE}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/80-dcd7b1f15f.woff2') format('woff2');unicode-range:U+99EF-9AEE}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/81-d23a3270ca.woff2') format('woff2');unicode-range:U+9AEF-9BEE}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/82-40a84e36ab.woff2') format('woff2');unicode-range:U+9BEF-9C7B,U+9C7D-9CEF}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/83-8bbbaf78ec.woff2') format('woff2');unicode-range:U+9CF0-9DEF}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/84-d767385cbe.woff2') format('woff2');unicode-range:U+9DF0-9EEF}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/85-373a1e0a3b.woff2') format('woff2');unicode-range:U+9EF0-9FA5,U+E23C,U+E247,U+E25F,U+E276,U+E283,U+E287,U+E293-E294,U+E2A3,U+E2B3,U+E2B5,U+E2B9,U+E2D9,U+E2E2,U+E2F4,U+E300,U+E308,U+E30F,U+E312-E314,U+E328,U+E33F,U+E354,U+E356-E358,U+E35D,U+E3AC-E3AD,U+E3D4,U+E3DA,U+E3EE,U+E3F1,U+E766-E76C,U+E76E-E78E}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/86-84d4aca9b0.woff2') format('woff2');unicode-range:U+E78F-E7BB,U+E7C7-E7E1,U+E7FE-E7FF,U+E801-E80F,U+E815-E864,U+F92C,U+F979,U+F995,U+F9E7,U+F9F1,U+FA0C-FA0F,U+FA11,U+FA13-FA14,U+FA18,U+FA1F-FA21,U+FA23-FA24,U+FA27-FA29,U+FB01-FB02,U+FE30-FE44,U+FE49-FE4F,U+FF01-FF0B,U+FF0D-FF19,U+FF1B-FF26}
+@font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/87-ed2ad5b481.woff2') format('woff2');unicode-range:U+FF27-FF5E,U+FFE0-FFE5}
+
+/* ------------------------------------------------------------------
+   电子钟那三处文字以前会拉下 4.5MB 的完整字库，原因在插件自己的 CSS
+   （CDN 上的 hexo-butterfly-clock-anzhiyu@1.1.9/lib/clock.min.css）：
+
+     @font-face{font-family:ZhuZiAYuanJWD;src:url(.../anzhiyu-blog@1.1.6/fonts/ZhuZiAWan.woff2);
+                font-display:swap;font-weight:lighter}
+     span.card-clock-weather,.card-clock-location,.card-clock-windDir{font-family:"ZhuZiAYuanJWD"}
+
+   它和我们的分片**撞了同一个 family 名**，而且没有 unicode-range（等于覆盖全部字符），
+   字重又是 lighter —— 于是只要那三处文字用它，浏览器就会把整份中文子集拉下来，
+   分片永远抢不过（分片有 unicode-range，插件那条没有）。
+
+   处理：① 分片的 family 改名成 LksZhuZi（唯一名字，插件那条就再没元素引用了）；
+        ② 把电子钟那三处显式指回分片，观感不变（同一套字形）。
+   改 family 名时记得同步 tools/prepare-performance-assets.py，否则重新生成会退回原名。
+   ------------------------------------------------------------------ */
+.card-clock-weather,
+.card-clock-location,
+.card-clock-windDir {
+  font-family: LksZhuZi, -apple-system, "Microsoft YaHei", sans-serif !important;
+  font-weight: 400 !important;
+}

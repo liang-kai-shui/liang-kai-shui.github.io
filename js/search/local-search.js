@@ -171,12 +171,16 @@ class LocalSearch {
   }
 
   fetchData () {
+    if (this.isfetched) return Promise.resolve()
+    if (this.loading) return this.loading
     const isXml = !this.path.endsWith('json')
-    fetch(this.path)
-      .then(response => response.text())
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 10000)
+    this.loading = fetch(this.path, { signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error('搜索索引暂不可用'); return response.text() })
       .then(res => {
         // Get the contents from search data
-        this.isfetched = true
+        if (isXml && new DOMParser().parseFromString(res, 'text/xml').querySelector('parsererror')) throw new Error('搜索索引格式错误')
         this.datas = isXml
           ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => ({
               title: element.querySelector('title').textContent,
@@ -192,8 +196,11 @@ class LocalSearch {
           return data
         })
         // Remove loading animation
+        this.isfetched = true
         window.dispatchEvent(new Event('search:loaded'))
       })
+      .finally(() => { clearTimeout(timer); this.loading = null })
+    return this.loading
   }
 
   // Highlight by wrapping node in mark elements with the given class name
@@ -234,7 +241,7 @@ class LocalSearch {
   }
 }
 
-window.addEventListener('load', () => {
+const initLocalSearch = () => {
 // Search
   const { path, top_n_per_article, unescape, languages } = GLOBAL_CONFIG.localSearch
   const localSearch = new LocalSearch({
@@ -292,6 +299,18 @@ window.addEventListener('load', () => {
   let loadFlag = false
   const $searchMask = document.getElementById('search-mask')
   const $searchDialog = document.querySelector('#local-search .search-dialog')
+  const loadSearch = () => {
+    const status = document.getElementById('loading-database')
+    if (status) status.textContent = '正在读取搜索索引…'
+    localSearch.fetchData().catch(() => {
+      if (!status) return
+      const retry = document.createElement('button')
+      retry.type = 'button'
+      retry.textContent = '重新加载'
+      retry.addEventListener('click', loadSearch)
+      status.replaceChildren(document.createTextNode('搜索暂时没连上。'), retry)
+    })
+  }
 
   // fix safari
   const fixSafariHeight = () => {
@@ -305,8 +324,8 @@ window.addEventListener('load', () => {
     btf.animateIn($searchMask, 'to_show 0.5s')
     btf.animateIn($searchDialog, 'titleScale 0.5s')
     setTimeout(() => { input.focus() }, 300)
+    if (!localSearch.isfetched) loadSearch()
     if (!loadFlag) {
-      !localSearch.isfetched && localSearch.fetchData()
       input.addEventListener('input', inputEventFunction)
       loadFlag = true
     }
@@ -337,7 +356,7 @@ window.addEventListener('load', () => {
     document.querySelector('#local-search .search-close-button').addEventListener('click', closeSearch)
     $searchMask.addEventListener('click', closeSearch)
     if (GLOBAL_CONFIG.localSearch.preload) {
-      localSearch.fetchData()
+      loadSearch()
     }
     localSearch.highlightSearchWords(document.getElementById('article-container'))
   }
@@ -346,6 +365,7 @@ window.addEventListener('load', () => {
     const $loadDataItem = document.getElementById('loading-database')
     $loadDataItem.nextElementSibling.style.display = 'block'
     $loadDataItem.remove()
+    if (input.value.trim()) inputEventFunction()
   })
 
   searchClickFn()
@@ -357,4 +377,6 @@ window.addEventListener('load', () => {
     localSearch.highlightSearchWords(document.getElementById('article-container'))
     searchClickFn()
   })
-})
+}
+if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', initLocalSearch, { once: true })
+else initLocalSearch()

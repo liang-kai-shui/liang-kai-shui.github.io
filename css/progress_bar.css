@@ -43,26 +43,12 @@
     height: 100%;
     width: 100%;
     background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    animation: gradient 1.5s ease infinite;
-    background-size: 200%;
 }
 
 .pace.pace-inactive {
     opacity: 0;
-    transition: 0.3s;
-    top: -8px;
+    transition: opacity .22s ease;
 }
-
-@keyframes gradient {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
+@media (prefers-reduced-motion: reduce) {
+    .pace, .pace .pace-progress { transition: none; }
 }

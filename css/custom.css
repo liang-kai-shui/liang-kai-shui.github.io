@@ -42,19 +42,14 @@
   font-display: swap;
   font-weight: lighter;
 } */
-@font-face {
-    font-family: ZhuZiAYuanJWD;
-    src: url(https://npm.elemecdn.com/anzhiyu-blog@1.1.6/fonts/ZhuZiAWan.woff2);
-    font-display: swap;
-    font-weight: lighter;
-}
+/* 同字形的按需分片由 /css/font-subsets.css 提供，避免下载完整中文字体。 */
 
 div#menus {
-    font-family: "ZhuZiAYuanJWD";
+    font-family: "LksZhuZi";
 }
 
 h1#site-title {
-    font-family: ZhuZiAYuanJWD;
+    font-family: LksZhuZi;
     font-size: 3em !important;
 }
 
@@ -62,7 +57,7 @@ a.article-title,
 a.blog-slider__title,
 a.categoryBar-list-link,
 h1.post-title {
-    font-family: ZhuZiAYuanJWD;
+    font-family: LksZhuZi;
 }
 
 .iconfont {

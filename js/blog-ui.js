@@ -38,11 +38,19 @@
       var coverLink = element('a')
       coverLink.href = post.url
       var img = element('img', 'post-bg')
-      img.src = post.cover
+      var variants = post.coverImages || []
+      var thumbnail = variants.find(function (item) { return item.width >= 480 }) || variants[variants.length - 1]
+      img.src = thumbnail ? thumbnail.src : post.cover
+      if (variants.length) {
+        img.srcset = variants.map(function (item) { return item.src + ' ' + item.width + 'w' }).join(', ')
+        img.sizes = '(max-width: 768px) calc(100vw - 32px), (max-width: 1200px) 40vw, 480px'
+        img.width = thumbnail.width; img.height = thumbnail.height
+      }
       img.alt = post.title
-      img.loading = 'lazy'
+      img.loading = index === 0 ? 'eager' : 'lazy'
+      if (index === 0) img.fetchPriority = 'high'
       img.decoding = 'async'
-      img.onerror = function () { img.onerror = null; img.src = '/img/404.jpg' }
+      img.onerror = function () { img.onerror = null; img.removeAttribute('srcset'); img.src = '/img/404.jpg' }
       coverLink.appendChild(img)
       cover.appendChild(coverLink)
       card.appendChild(cover)
