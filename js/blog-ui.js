@@ -396,7 +396,7 @@
       .then(function (list) {
         if (!Array.isArray(list)) throw new Error('歌单没有返回歌曲')
         playlist = list.slice(0, 500).map(function (song) {
-          return { name: String(song.name || '未命名歌曲'), artist: String(song.artist || ''), url: safeHttp(song.url), cover: safeHttp(song.pic || song.cover), lrc: safeHttp(song.lrc) }
+          return { name: String(song.name || '未命名歌曲'), artist: String(song.artist || ''), url: safeHttp(song.url), cover: safeHttp(song.pic || song.cover), lrc: safeHttp(song.lrc), type: 'lks-cors' }
         }).filter(function (song) { return song.url })
         if (!playlist.length) { playlist = null; throw new Error('歌单为空') }
         return playlist
@@ -440,9 +440,51 @@
       var container = element('div')
       musicWrapper.appendChild(container)
       destination.replaceChildren(musicWrapper)
-      musicPlayer = new APlayer({ container: container, audio: values[1], autoplay: false, preload: 'none', theme: '#49b1f5', volume: .6, listFolded: true, listMaxHeight: '220px', mutex: true })
+      var plainAudio = new Set()
+      musicPlayer = new APlayer({ container: container, audio: values[1], autoplay: false, preload: 'none', theme: '#49b1f5', volume: .6, listFolded: true, listMaxHeight: '220px', mutex: true,
+        customAudioType: { 'lks-cors': function (audio, item) {
+          // 在设置 src 前启用匿名 CORS，允许频谱读取。没有授权的音源仍可降级直听。
+          if (plainAudio.has(item.url)) audio.removeAttribute('crossorigin')
+          else audio.crossOrigin = 'anonymous'
+          audio.src = item.url
+        } }
+      })
+      musicPlayer.audio.addEventListener('error', function (event) {
+        var item = values[1][musicPlayer.list.index]
+        if (!item || !musicPlayer.audio.crossOrigin || plainAudio.has(item.url)) return
+        event.stopImmediatePropagation()
+        plainAudio.add(item.url)
+        var position = musicPlayer.audio.currentTime, resume = !musicPlayer.paused
+        musicPlayer.audio.removeAttribute('crossorigin')
+        musicPlayer.audio.addEventListener('loadedmetadata', function () { if (position && values[1][musicPlayer.list.index] === item) musicPlayer.seek(position) }, { once: true })
+        musicPlayer.audio.load()
+        if (resume) musicPlayer.play()
+        document.dispatchEvent(new CustomEvent('lks:music', { detail: { event: 'analysis-unavailable' } }))
+      }, true)
+      // 链接留在同一个播放器里，侧栏和顶栏浮层搬动它时也能继续使用。
+      var coverLink = element('a', 'lks-music-room-link lks-music-cover-link')
+      coverLink.href = '/music/'
+      coverLink.setAttribute('aria-label', '到音乐专页听这首歌')
+      container.querySelector('.aplayer-pic').appendChild(coverLink)
+      var titleNode = container.querySelector('.aplayer-title')
+      var titleLink = element('a', 'lks-music-room-link')
+      titleLink.href = '/music/'
+      titleLink.title = '到音乐专页听这首歌'
+      titleNode.replaceWith(titleLink)
+      titleLink.appendChild(titleNode)
+      musicWrapper.addEventListener('click', function (event) {
+        if (!event.target.closest('.lks-music-room-link')) return
+        // 封面的原生行为会切换播放，先拦住，再保持当前进度进入专页。
+        event.stopPropagation()
+        if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+        event.preventDefault()
+        toggleMusic(false)
+        if (location.pathname === '/music/') return
+        if (window.pjax && typeof window.pjax.loadUrl === 'function') window.pjax.loadUrl('/music/')
+        else location.assign('/music/')
+      }, true)
       var controls = element('div', 'lks-music-controls')
-      var specs = [['prev', '上一首', 'fa-step-backward'], ['toggle', '播放', 'fa-play'], ['next', '下一首', 'fa-step-forward'], ['list', '展开歌单', 'fa-list-ul']]
+      var specs = [['prev', '上一首', 'fa-step-backward'], ['toggle', '播放', 'fa-play'], ['next', '下一首', 'fa-step-forward']]
       specs.forEach(function (spec) {
         var button = element('button')
         button.type = 'button'
@@ -454,11 +496,78 @@
           if (spec[0] === 'prev') musicPlayer.skipBack()
           else if (spec[0] === 'next') musicPlayer.skipForward()
           else if (spec[0] === 'toggle') musicPlayer.toggle()
-          else musicPlayer.list.toggle()
         })
         controls.appendChild(button)
       })
-      musicWrapper.appendChild(controls)
+      // 调整 APlayer 原有 DOM，原生进度、时间和歌单继续由同一个实例维护。
+      var seek = element('div', 'lks-music-seek')
+      var progressBar = container.querySelector('.aplayer-bar-wrap')
+      progressBar.setAttribute('role', 'slider')
+      progressBar.setAttribute('aria-label', '电台播放进度')
+      progressBar.setAttribute('aria-valuemin', '0')
+      progressBar.tabIndex = 0
+      progressBar.addEventListener('keydown', function (event) {
+        var duration = musicPlayer.duration
+        if (!duration || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+        event.preventDefault()
+        musicPlayer.seek(event.key === 'Home' ? 0 : event.key === 'End' ? duration : musicPlayer.audio.currentTime + (event.key === 'ArrowRight' ? 5 : -5))
+        syncProgress()
+      })
+      var times = element('div', 'lks-music-timestamps')
+      times.append(musicPlayer.template.ptime, musicPlayer.template.dtime)
+      seek.append(progressBar, times)
+      var footer = element('div', 'lks-music-footer')
+      var volumeGroup = element('div', 'lks-music-volume')
+      var mute = element('button')
+      mute.type = 'button'; mute.dataset.musicAction = 'mute'
+      mute.appendChild(element('i', 'fas fa-volume-up'))
+      mute.addEventListener('click', function () { musicPlayer.audio.muted = !musicPlayer.audio.muted; syncVolume() })
+      var volume = element('input')
+      volume.type = 'range'; volume.min = '0'; volume.max = '100'
+      volume.setAttribute('aria-label', '电台音量')
+      volume.addEventListener('input', function () { musicPlayer.volume(Number(volume.value) / 100, true); syncVolume() })
+      var volumeText = element('span', 'lks-music-volume-value')
+      volumeText.setAttribute('aria-hidden', 'true')
+      volumeGroup.append(mute, volume, volumeText)
+      var listButton = element('button', 'lks-music-list-toggle')
+      listButton.type = 'button'; listButton.dataset.musicAction = 'list'
+      listButton.append(element('i', 'fas fa-list-ul'), element('span', '', '歌单'))
+      listButton.setAttribute('aria-controls', 'lks-player-list')
+      listButton.addEventListener('click', function () { musicPlayer.list.toggle(); syncList() })
+      footer.append(volumeGroup, listButton)
+      var nativeList = container.querySelector('.aplayer-list')
+      nativeList.id = 'lks-player-list'
+      container.append(seek, controls, footer, nativeList)
+      container.querySelector('.aplayer-time').setAttribute('aria-hidden', 'true')
+      container.querySelectorAll('.aplayer-time button').forEach(function (node) { node.tabIndex = -1 })
+      function syncProgress () {
+        progressBar.setAttribute('aria-valuemax', String(musicPlayer.duration || 0))
+        progressBar.setAttribute('aria-valuenow', String(Math.floor(musicPlayer.audio.currentTime || 0)))
+        progressBar.setAttribute('aria-valuetext', musicPlayer.template.ptime.textContent + ' / ' + musicPlayer.template.dtime.textContent)
+      }
+      function syncVolume () {
+        var silent = musicPlayer.audio.muted || !musicPlayer.audio.volume
+        mute.setAttribute('aria-label', silent ? '取消电台静音' : '电台静音')
+        mute.setAttribute('aria-pressed', String(silent))
+        mute.title = mute.getAttribute('aria-label')
+        mute.firstChild.className = 'fas ' + (silent ? 'fa-volume-mute' : 'fa-volume-up')
+        if (document.activeElement !== volume) volume.value = String(Math.round(musicPlayer.audio.volume * 100))
+        volumeText.textContent = silent ? '0%' : Math.round(musicPlayer.audio.volume * 100) + '%'
+        volume.style.setProperty('--volume-fill', (silent ? 0 : musicPlayer.audio.volume * 100) + '%')
+      }
+      function syncList () {
+        var open = !nativeList.classList.contains('aplayer-list-hide')
+        listButton.setAttribute('aria-expanded', String(open))
+        listButton.setAttribute('aria-label', open ? '收起歌单' : '展开歌单')
+        listButton.title = listButton.getAttribute('aria-label')
+        nativeList.setAttribute('aria-hidden', String(!open))
+        nativeList.inert = !open
+      }
+      musicPlayer.on('volumechange', syncVolume)
+      musicPlayer.on('timeupdate', syncProgress)
+      musicPlayer.on('durationchange', syncProgress)
+      ;['listshow', 'listhide'].forEach(function (name) { musicPlayer.on(name, function () { queueMicrotask(syncList) }) })
+      syncVolume(); syncProgress(); syncList()
       var sync = function () {
         var button = controls.querySelector('[data-music-action="toggle"]')
         button.setAttribute('aria-label', musicPlayer.paused ? '播放' : '暂停')
@@ -468,8 +577,17 @@
       musicPlayer.on('play', sync)
       musicPlayer.on('pause', sync)
       ;['play', 'pause', 'ended', 'listswitch', 'timeupdate', 'loadedmetadata', 'durationchange', 'volumechange', 'error'].forEach(function (name) {
-        musicPlayer.on(name, function () { document.dispatchEvent(new CustomEvent('lks:music', { detail: { event: name } })) })
+        musicPlayer.on(name, function () {
+          var publish = function () { document.dispatchEvent(new CustomEvent('lks:music', { detail: { event: name } })) }
+          // APlayer 在写入新 index 之前触发 listswitch，等这一轮切歌完成再读状态。
+          if (name === 'listswitch') queueMicrotask(function () {
+            container.querySelector('.aplayer-author').textContent = values[1][musicPlayer.list.index].artist
+            syncProgress(); publish()
+          })
+          else publish()
+        })
       })
+      container.querySelector('.aplayer-author').textContent = values[1][musicPlayer.list.index].artist
       document.dispatchEvent(new CustomEvent('lks:music', { detail: { event: 'ready' } }))
     }).catch(function () { musicFailure() }).finally(function () { musicLoading = null })
     return musicLoading

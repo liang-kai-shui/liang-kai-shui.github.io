@@ -1,4 +1,7 @@
-/* 蓝色电台沿用博客现有的日夜配色，独立音乐页不另建一套主题。 */
+/* 封面取色只作用于音乐馆，保留网站的日夜模式。 */
+@property --room-hue { syntax: '<number>'; inherits: true; initial-value: 205; }
+@property --room-hue-secondary { syntax: '<number>'; inherits: true; initial-value: 234; }
+@property --room-saturation { syntax: '<percentage>'; inherits: true; initial-value: 40%; }
 #web_bg { filter: blur(var(--lks-bg-blur, 0px)); transform: scale(var(--lks-bg-scale, 1)); transform-origin: center; }
 #site-subtitle { padding: 0 24px; }
 #subtitle.lks-listening { display: inline-grid; max-width: min(760px, 90vw); min-height: 2.6em; place-items: start center; vertical-align: top; line-height: 1.5; }
@@ -6,14 +9,20 @@
 .lks-subtitle-line.is-current { animation: lks-lyric-enter 420ms cubic-bezier(.22,.7,.2,1) both; }
 .lks-subtitle-line.is-leaving { pointer-events: none; animation: lks-lyric-leave 380ms ease both; }
 #subtitle[data-mode='lyric'] { font-weight: 500; letter-spacing: .04em; }
+.lks-quote-line { display: block; text-align: center; }
+.lks-quote-source { display: block; margin-top: 7px; color: inherit; opacity: .78; font-size: clamp(11px, .58em, 14px); font-weight: 400; line-height: 1.6; letter-spacing: .04em; animation: lks-source-enter 350ms ease both; }
+.lks-quote-source[hidden] { display: none; }
+.lks-type-caret { display: inline-block; margin-left: 3px; font-weight: 300; opacity: .85; animation: lks-type-blink 1s step-end infinite; }
+@keyframes lks-type-blink { 50% { opacity: 0; } }
+@keyframes lks-source-enter { from { opacity: 0; transform: translateY(3px); } to { opacity: .78; transform: translateY(0); } }
 @keyframes lks-lyric-enter { from { opacity: 0; transform: translateY(12px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 @keyframes lks-lyric-leave { to { opacity: 0; transform: translateY(-10px); } }
 #content-inner:has(.lks-music-room) { display: block; max-width: 1200px; padding-top: 48px; }
 #content-inner > #page:has(.lks-music-room) { width: 100%; padding: 0; background: transparent !important; box-shadow: none; overflow: visible; }
 #page:has(.lks-music-room) > .page-title { display: none; }
 #page:has(.lks-music-room) > #post-comment { margin: 22px 0 0; padding: 28px 34px; border: 1px solid var(--lks-line); border-radius: 24px; background: var(--lks-surface); }
-.lks-music-room { --room-accent: #2777ad; }
-html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
+.lks-music-room { --room-hue: 205; --room-hue-secondary: 234; --room-saturation: 40%; --room-accent: hsl(var(--room-hue) var(--room-saturation) 32%); --room-ink: hsl(var(--room-hue) 24% 17%); --room-muted: hsl(var(--room-hue) 12% 42%); --room-surface: hsl(var(--room-hue) 24% 97%); --room-tint: hsl(var(--room-hue) 32% 88%); --room-border: hsl(var(--room-hue) 20% 78% / .55); --lks-accent: var(--room-accent); --font-color: var(--room-ink); --lks-muted: var(--room-muted); --lks-soft: hsl(var(--room-hue) 24% 91% / .65); --lks-line: var(--room-border); transition: --room-hue 1.1s ease, --room-hue-secondary 1.1s ease, --room-saturation 1.1s ease; }
+html[data-theme='dark'] .lks-music-room { --room-accent: hsl(var(--room-hue) var(--room-saturation) 76%); --room-ink: hsl(var(--room-hue) 20% 92%); --room-muted: hsl(var(--room-hue) 12% 66%); --room-surface: hsl(var(--room-hue) 24% 10%); --room-tint: hsl(var(--room-hue) 30% 20%); --room-border: hsl(var(--room-hue) 22% 55% / .24); --lks-soft: hsl(var(--room-hue) 24% 22% / .65); }
 .lks-room-intro { margin: 0 0 32px; padding: 12px 8px 0; }
 .lks-room-eyebrow { display: block; color: var(--lks-accent); font-size: 11px; letter-spacing: .15em; font-weight: 600; }
 .lks-room-intro h1 { margin: 10px 0 8px; color: var(--font-color); font-size: clamp(28px, 3.6vw, 44px); letter-spacing: -.035em; line-height: 1.4; }
@@ -23,16 +32,19 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
    曾经试过 align-items: start 让它们各按内容定高，结果就是右卡比左卡短一截、边缘对不齐。
    真正要治的不是"等高"，而是"多出来的高度别跑进歌词框"——
    那个由下面 .lks-room-lyrics 的 flex 和 JS 的居中逻辑一起解决。 */
-.lks-room-grid { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: 24px; }
-.lks-room-player, .lks-room-library { min-width: 0; border: 1px solid var(--lks-line); border-radius: 28px; background: color-mix(in srgb, var(--lks-surface) 94%, transparent); box-shadow: var(--lks-shadow); }
-.lks-room-player { padding: 30px 34px 22px; text-align: center; background-image: radial-gradient(ellipse at 50% 18%, rgba(73,177,245,.13), transparent 67%); }
+.lks-room-grid { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: 24px; }
+.lks-room-grid::before { content: ''; position: absolute; inset: -20px; z-index: -1; border-radius: 40px; background: radial-gradient(ellipse at 12% 10%, hsl(var(--room-hue) var(--room-saturation) 50% / .17), transparent 65%), radial-gradient(ellipse at 95% 95%, hsl(var(--room-hue-secondary) 36% 46% / .12), transparent 60%); filter: blur(20px); pointer-events: none; }
+.lks-room-player, .lks-room-library { min-width: 0; border: 1px solid var(--room-border); border-radius: 28px; color: var(--room-ink); background: radial-gradient(ellipse at 10% 0%, color-mix(in srgb, var(--room-tint) 65%, transparent), transparent 67%), linear-gradient(150deg, var(--room-surface), color-mix(in srgb, var(--room-surface) 85%, var(--room-tint))); box-shadow: 0 24px 60px hsl(var(--room-hue) 30% 5% / .14), inset 0 1px 0 hsl(var(--room-hue) 35% 90% / .09); }
+.lks-room-player { padding: 30px 34px 22px; text-align: center; }
+.lks-room-library { background-image: radial-gradient(ellipse at 100% 0%, hsl(var(--room-hue-secondary) 36% 50% / .09), transparent 62%), linear-gradient(170deg, var(--room-surface), color-mix(in srgb, var(--room-surface) 88%, var(--room-tint))); }
 .lks-room-disc { position: relative; display: grid; place-items: center; width: min(240px, 26vh, 78%); aspect-ratio: 1; margin: 4px auto 20px; border: 9px solid color-mix(in srgb, var(--lks-accent) 18%, var(--lks-soft)); border-radius: 50%; background: repeating-radial-gradient(circle, #1f2a3a 0 2px, #101923 3px 5px); box-shadow: 0 16px 32px rgba(0,0,0,.18), 0 0 0 1px var(--lks-line); animation: lks-disc-spin 28s linear infinite; animation-play-state: paused; }
-.lks-room-disc .lks-room-cover { display: block; width: 77%; height: 77%; margin: 0; border-radius: 50%; object-fit: cover; }
+.lks-disc-artwork { width: 77%; height: 77%; border-radius: 50%; }
+.lks-room-disc .lks-disc-artwork .lks-room-cover { display: block; width: 100%; height: 100%; margin: 0; border-radius: 50%; object-fit: cover; }
 .lks-room-disc .lks-room-cover[hidden] { display: none; }
 .lks-disc-center { position: absolute; left: calc(50% - 14px); top: calc(50% - 14px); width: 28px; height: 28px; border: 6px solid rgba(255,255,255,.45); border-radius: 50%; background: #152235; box-shadow: 0 0 0 1px rgba(0,0,0,.2); }
 .is-playing .lks-room-disc { animation-play-state: running; }
 @keyframes lks-disc-spin { to { transform: rotate(360deg); } }
-.lks-room-playing-label { font-size: 10px; color: var(--lks-muted); letter-spacing: .2em; }
+.lks-room-playing-label { display: none; }
 .lks-room-artist { min-height: 22px; margin: 0; font-size: 13px; color: var(--lks-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 歌名/歌手都钉死在两行以内：高度只由这两块决定，换歌时整张左卡的高度就不会变
    （原来长歌名会折到三五行，把左卡撑高，右卡跟着一起变高 —— 用户看到的就是"有些歌卡片正常、有些被拉长"）。 */
@@ -49,15 +61,15 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
 .lks-room-controls { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 16px auto; max-width: 330px; }
 .lks-room-controls button { display: grid; place-items: center; width: 44px; height: 44px; flex: none; padding: 0; border: none; border-radius: 50%; background: transparent; color: var(--lks-muted); font-size: 18px; cursor: pointer; }
 .lks-room-controls button:hover, .lks-room-controls button.is-active { color: var(--lks-accent); background: var(--lks-soft); }
-.lks-room-controls .lks-room-play { width: 64px; height: 64px; background: #318ece; color: #fff; font-size: 24px; box-shadow: 0 6px 20px rgba(49,142,206,.25); }
-.lks-room-controls .lks-room-play:hover { background: #257db8; color: #fff; }
+.lks-room-controls .lks-room-play { width: 64px; height: 64px; background: linear-gradient(140deg, hsl(var(--room-hue) var(--room-saturation) 39%), hsl(var(--room-hue-secondary) 38% 30%)); color: #fff; font-size: 24px; box-shadow: 0 6px 20px hsl(var(--room-hue) 40% 30% / .25), inset 0 1px 0 #ffffff2b; }
+.lks-room-controls .lks-room-play:hover { background: linear-gradient(140deg, hsl(var(--room-hue) var(--room-saturation) 44%), hsl(var(--room-hue-secondary) 38% 35%)); color: #fff; }
 .lks-room-volume { display: flex; align-items: center; justify-content: center; gap: 12px; width: 155px; margin: 0 auto; font-size: 11px; color: var(--lks-muted); }
 .lks-room-volume input { flex: 1; min-width: 0; }
 .lks-room-status { min-height: 20px; margin: 16px 0 0; font-size: 11px; color: var(--lks-muted); }
 .lks-room-library { display: flex; flex-direction: column; padding: 24px 24px 18px; }
 .lks-room-tabs { display: flex; width: min(280px, 100%); margin: 0 auto 12px; gap: 4px; padding: 4px; border: 1px solid var(--lks-line); border-radius: 30px; background: var(--lks-soft); }
 .lks-room-tabs button { flex: 1; min-height: 38px; border: none; border-radius: 24px; background: transparent; color: var(--lks-muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.lks-room-tabs button[aria-selected='true'] { background: #246e9d; color: #fff; }
+.lks-room-tabs button[aria-selected='true'] { background: linear-gradient(130deg, hsl(var(--room-hue) var(--room-saturation) 33%), hsl(var(--room-hue-secondary) 30% 29%)); color: #fff; }
 .lks-room-tabs span { font-size: 10px; opacity: .75; margin-left: 3px; }
 /* 面板本身也做成纵向 flex：里面的歌词框/歌单框 flex: 1 撑满卡片里的剩余空间。
    这样"右卡和左卡等高"靠的是面板填满，而不是把歌词框硬撑高 ——
@@ -70,12 +82,19 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
    实测 36 句歌词能把卡片从 661px 撑到 2740px（overflow: hidden 拦不住固有尺寸计算）。
    给个确定高度（0）当 flex base，再靠 flex-grow 撑满卡片里剩下的空间，就既有界又能填满。
    min-height 是下限：窗口很小的时候不至于压成一条缝。 */
-.lks-room-lyrics { position: relative; flex: 1 1 0; height: 0; min-height: clamp(240px, 30vh, 340px); overflow: hidden; mask-image: linear-gradient(transparent, #000 14%, #000 85%, transparent); -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 85%, transparent); }
+.lks-room-lyrics { position: relative; flex: 1 1 0; height: 0; min-height: clamp(240px, 30vh, 340px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; mask-image: linear-gradient(transparent, #000 14%, #000 85%, transparent); -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 85%, transparent); }
 .lks-lyric-track { position: relative; transition: transform 480ms cubic-bezier(.22,.7,.2,1); }
 .lks-music-room .lks-lyric-line { display: block; width: 100%; margin: 0; padding: 17px 12px; min-height: 58px; border: 0; border-radius: 14px; background: transparent; color: var(--font-color); font: inherit; font-size: 16px; font-weight: 500; white-space: pre-line; line-height: 1.7; text-align: center; cursor: pointer; opacity: .25; transition: opacity 350ms ease, color 350ms ease, background-color 350ms ease; }
 .lks-music-room .lks-lyric-line[data-distance='1'] { opacity: .6; }
-.lks-music-room .lks-lyric-line.is-current { background: rgba(73,177,245,.12); color: var(--room-accent); font-size: 19px; font-weight: 600; opacity: 1; }
+.lks-music-room .lks-lyric-line.is-current { background: linear-gradient(100deg, hsl(var(--room-hue) 40% 50% / .13), hsl(var(--room-hue-secondary) 30% 50% / .05)); color: var(--room-accent); font-size: 19px; font-weight: 600; opacity: 1; }
 .lks-lyric-line:hover { opacity: 1; }
+/* 高亮只改字号，不改变行高，手动浏览时换句不会触发滚动锚点位移。 */
+.lks-music-room .lks-lyric-line { line-height: 32px; }
+.is-browsing-lyrics .lks-lyric-line { opacity: .75; }
+.is-browsing-lyrics .lks-lyric-line.is-current { opacity: 1; }
+.lks-room-lyric-footer { position: relative; min-height: 42px; display: grid; place-items: center; }
+.lks-room-lyric-footer [data-room-action='follow'] { position: absolute; padding: 7px 14px; border: 1px solid var(--lks-line); border-radius: 20px; background: var(--lks-surface); color: var(--room-accent); font: inherit; font-size: 12px; cursor: pointer; }
+.is-browsing-lyrics .lks-room-lyric-note { visibility: hidden; }
 .lks-room-empty { display: grid; place-items: center; height: 100%; margin: 0; padding: 30px; text-align: center; font-size: 14px; color: var(--lks-muted); }
 .lks-room-lyric-note { margin: 10px 0 0; font-size: 11px; color: var(--lks-muted); text-align: center; }
 .lks-room-search { display: flex; align-items: center; gap: 10px; margin: 6px 0 14px; padding: 10px 14px; border: 1px solid var(--lks-line); border-radius: 12px; color: var(--lks-muted); background: var(--lks-soft); }
@@ -83,8 +102,10 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
 .lks-room-queue { flex: 1 1 0; height: 0; min-height: clamp(240px, 30vh, 340px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .lks-room-song { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px; border: none; border-bottom: 1px solid var(--lks-line); border-radius: 10px; background: transparent; color: var(--font-color); text-align: left; font: inherit; cursor: pointer; }
 .lks-room-song:hover { background: var(--lks-soft); }
-.lks-room-song.is-current { background: rgba(73,177,245,.12); color: var(--lks-accent); }
+.lks-room-song.is-current { background: linear-gradient(100deg, hsl(var(--room-hue) 40% 50% / .14), hsl(var(--room-hue-secondary) 30% 50% / .04)); color: var(--lks-accent); }
 .lks-room-song-number { width: 22px; flex: none; color: var(--lks-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.lks-room-song-artwork { position: relative; display: grid; place-items: center; flex: none; width: 44px; height: 44px; overflow: hidden; border-radius: 9px; background: var(--lks-soft); color: var(--lks-muted); }
+#article-container .lks-room-song-artwork .lks-room-song-cover { position: absolute; inset: 0; display: block; width: 100%; height: 100%; margin: 0; border-radius: inherit; object-fit: cover; }
 .lks-room-song-details { min-width: 0; flex: 1; }
 .lks-room-song strong, .lks-room-song small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lks-room-song strong { font-size: 13px; font-weight: 500; }
@@ -93,6 +114,13 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
 .lks-room-queue-empty { color: var(--lks-muted); font-size: 13px; text-align: center; }
 .lks-room-comment-intro { padding: 44px 8px 0; }
 .lks-room-comment-intro h2 { margin: 8px 0; font-size: 23px; }
+.lks-room-spectrum { position: relative; width: min(260px, calc(100% - 38px)); margin: -8px auto 10px; }
+.lks-room-spectrum canvas { display: block; width: 100%; height: 32px; }
+.lks-spectrum-caption { position: absolute; right: -32px; top: 2px; color: var(--room-muted); }
+.lks-spectrum-state { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.lks-spectrum-toggle { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.lks-spectrum-toggle:hover, .lks-spectrum-toggle[aria-pressed='false'] { background: var(--lks-soft); color: var(--room-accent); }
+.lks-room-spectrum[data-state='off'] canvas { opacity: .2; }
 .lks-music-room button:focus-visible, .lks-music-room input:focus-visible { outline: 2px solid var(--lks-accent); outline-offset: 3px; }
 @media (max-width: 768px) {
   #content-inner:has(.lks-music-room) { padding: 26px 14px; }
@@ -105,6 +133,9 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
   .lks-room-lyrics { min-height: clamp(220px, 34vh, 320px); }
   .lks-room-queue { min-height: clamp(220px, 34vh, 320px); }
   .lks-room-search input { font-size: 16px; }
+  .lks-room-song { gap: 10px; padding: 10px 6px; }
+  .lks-spectrum-toggle { width: 36px; height: 36px; }
+  .lks-spectrum-caption { top: -2px; right: -38px; }
   #page:has(.lks-music-room) > #post-comment { padding: 20px 16px; border-radius: 22px; }
   #subtitle.lks-listening { max-width: 86vw; font-size: 15px; }
 }
@@ -113,4 +144,7 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
   .lks-subtitle-line.is-leaving { display: none; }
   .lks-room-disc { animation: none; }
   .lks-lyric-track, .lks-lyric-line { transition: none; }
+  .lks-music-room { transition: none; }
+  .lks-type-caret { display: none; }
+  .lks-quote-source { animation: none; }
 }
