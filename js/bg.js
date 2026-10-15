@@ -395,6 +395,20 @@
 
   document.addEventListener('pjax:complete', reapply)
 
+  // 只处理背景层，标题和正文保持清晰；最大 5px，回到顶部恢复原图。
+  var blurFrame = 0
+  function updateBlur () {
+    blurFrame = 0
+    var progress = Math.min(1, Math.max(0, window.scrollY / Math.max(320, window.innerHeight * .75)))
+    document.documentElement.style.setProperty('--lks-bg-blur', (progress * 5).toFixed(2) + 'px')
+    document.documentElement.style.setProperty('--lks-bg-scale', (1 + progress * .025).toFixed(4))
+  }
+  function scheduleBlur () { if (!blurFrame) blurFrame = requestAnimationFrame(updateBlur) }
+  window.addEventListener('scroll', scheduleBlur, { passive: true })
+  window.addEventListener('resize', scheduleBlur, { passive: true })
+  document.addEventListener('pjax:complete', scheduleBlur)
+  scheduleBlur()
+
   // 方便自检脚本查看状态
   window.lksBg = {
     init: init,

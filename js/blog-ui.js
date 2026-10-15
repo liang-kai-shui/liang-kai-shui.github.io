@@ -368,6 +368,8 @@
 
   function musicDestination () {
     if (drawer && !drawer.hidden) return drawer.querySelector('.lks-music-host')
+    var room = document.querySelector('.lks-music-engine')
+    if (room) return room
     if (window.innerWidth > 900) return document.querySelector('#aside-content .lks-music-host') || parking
     return parking
   }
@@ -394,7 +396,7 @@
       .then(function (list) {
         if (!Array.isArray(list)) throw new Error('歌单没有返回歌曲')
         playlist = list.slice(0, 500).map(function (song) {
-          return { name: String(song.name || '未命名歌曲'), artist: String(song.artist || ''), url: safeHttp(song.url), cover: safeHttp(song.pic || song.cover) }
+          return { name: String(song.name || '未命名歌曲'), artist: String(song.artist || ''), url: safeHttp(song.url), cover: safeHttp(song.pic || song.cover), lrc: safeHttp(song.lrc) }
         }).filter(function (song) { return song.url })
         if (!playlist.length) { playlist = null; throw new Error('歌单为空') }
         return playlist
@@ -415,6 +417,7 @@
   }
 
   function musicFailure () {
+    document.dispatchEvent(new CustomEvent('lks:music-failure'))
     document.querySelectorAll('.lks-music-host').forEach(function (host) {
       host.replaceChildren(element('p', 'lks-music-status', '歌单暂时没连上，稍后可以再试。'))
       var retry = element('button', 'lks-music-retry', '重新连接')
@@ -464,6 +467,10 @@
       }
       musicPlayer.on('play', sync)
       musicPlayer.on('pause', sync)
+      ;['play', 'pause', 'ended', 'listswitch', 'timeupdate', 'loadedmetadata', 'durationchange', 'volumechange', 'error'].forEach(function (name) {
+        musicPlayer.on(name, function () { document.dispatchEvent(new CustomEvent('lks:music', { detail: { event: name } })) })
+      })
+      document.dispatchEvent(new CustomEvent('lks:music', { detail: { event: 'ready' } }))
     }).catch(function () { musicFailure() }).finally(function () { musicLoading = null })
     return musicLoading
   }
@@ -564,7 +571,7 @@
     initRecent()
     initMusicShell()
     mountMusic()
-    if (window.innerWidth > 900) ensureMusic()
+    if (window.innerWidth > 900 || document.querySelector('.lks-music-engine')) ensureMusic()
     var root = document.querySelector('.lks-category-bar') && document.querySelector('#recent-posts')
     home = root ? { root: root, original: Array.from(root.querySelector('.recent-post-items').children) } : null
     var calendar = document.querySelector('.lks-activity-card')
@@ -579,5 +586,5 @@
   document.addEventListener('pjax:complete', init)
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)
   else init()
-  window.lksMusic = { get player () { return musicPlayer }, open: function () { toggleMusic(true) } }
+  window.lksMusic = { get player () { return musicPlayer }, get songs () { return playlist || [] }, ensure: ensureMusic, open: function () { toggleMusic(true) } }
 })()

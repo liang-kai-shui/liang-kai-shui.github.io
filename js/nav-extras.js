@@ -60,12 +60,11 @@
     var go = function (list) {
       if (!list || !list.length) return
       var here = window.location.pathname
-      var pick = list[Math.floor(Math.random() * list.length)]
-      // 别跳到自己，最多重试 5 次
-      for (var i = 0; i < 5 && list.length > 1 && pick.u === here; i++) {
-        pick = list[Math.floor(Math.random() * list.length)]
-      }
-      window.location.href = pick.u
+      var candidates = list.filter(function (post) { return post.u !== here })
+      if (!candidates.length) candidates = list
+      var pick = candidates[Math.floor(Math.random() * candidates.length)]
+      if (window.pjax && typeof window.pjax.loadUrl === 'function') window.pjax.loadUrl(pick.u)
+      else window.location.href = pick.u
     }
 
     if (postsCache) return go(postsCache)

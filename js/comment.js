@@ -112,7 +112,7 @@
     root.innerHTML = ''
     root.appendChild(buildForm(root))
     var listHead = el('div', 'lks-list-head')
-    var listTitle = el('h3', 'lks-list-title', state.path === '/comments/' ? '大家说了什么' : '评论区')
+    var listTitle = el('h3', 'lks-list-title', state.path === '/comments/' ? '大家说了什么' : state.path === '/music/' ? '听友留言' : '评论区')
     var listCount = el('span', 'lks-list-count', '0 条')
     listHead.append(listTitle, listCount)
     root.appendChild(listHead)
@@ -152,10 +152,11 @@
     var meta = getMeta()
     var form = el('form', 'lks-form')
     var isGuestbook = state.path === '/comments/'
+    var isMusic = state.path === '/music/'
     var intro = el('div', 'lks-form-intro')
     intro.append(
-      el('h3', 'lks-form-title', isGuestbook ? '在这里留个言' : '聊聊这篇文章'),
-      el('p', 'lks-form-desc', isGuestbook ? '想聊什么都行，写完直接发在下面。' : '有想法或发现哪里不对，欢迎在这里说。')
+      el('h3', 'lks-form-title', isGuestbook ? '在这里留个言' : isMusic ? '一起聊聊音乐' : '聊聊这篇文章'),
+      el('p', 'lks-form-desc', isGuestbook ? '想聊什么都行，写完直接发在下面。' : isMusic ? '推荐一首好歌，或说说它让你想起了什么。' : '有想法或发现哪里不对，欢迎在这里说。')
     )
 
     var row = el('div', 'lks-row')
