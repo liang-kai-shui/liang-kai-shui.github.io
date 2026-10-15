@@ -18,11 +18,12 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
 .lks-room-eyebrow { display: block; color: var(--lks-accent); font-size: 11px; letter-spacing: .15em; font-weight: 600; }
 .lks-room-intro h1 { margin: 10px 0 8px; color: var(--font-color); font-size: clamp(28px, 3.6vw, 44px); letter-spacing: -.035em; line-height: 1.4; }
 .lks-room-intro p, .lks-room-comment-intro p { margin: 0; color: var(--lks-muted); font-size: 14px; line-height: 1.8; }
-/* align-items: start —— 两张卡片各按自己的内容定高，不互相拉伸。
-   网格默认是 stretch：左边播放卡（圆盘撑着）比右边高，于是右边会被拉成一样高，
-   而右边多出来的高度全落在歌词框里 —— 结果就是"两张卡很高、歌词区一大片空白"（用户报的）。
-   另外歌词框和歌单框改成跟着窗口高度走，13 寸笔记本上不会再顶满一屏。 */
-.lks-room-grid { display: grid; align-items: start; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: 24px; }
+
+/* 两张卡片保持等高（网格默认 stretch，左卡有圆盘、天然更高，右卡跟着齐平）。
+   曾经试过 align-items: start 让它们各按内容定高，结果就是右卡比左卡短一截、边缘对不齐。
+   真正要治的不是"等高"，而是"多出来的高度别跑进歌词框"——
+   那个由下面 .lks-room-lyrics 的 flex 和 JS 的居中逻辑一起解决。 */
+.lks-room-grid { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: 24px; }
 .lks-room-player, .lks-room-library { min-width: 0; border: 1px solid var(--lks-line); border-radius: 28px; background: color-mix(in srgb, var(--lks-surface) 94%, transparent); box-shadow: var(--lks-shadow); }
 .lks-room-player { padding: 30px 34px 22px; text-align: center; background-image: radial-gradient(ellipse at 50% 18%, rgba(73,177,245,.13), transparent 67%); }
 .lks-room-disc { position: relative; display: grid; place-items: center; width: min(240px, 26vh, 78%); aspect-ratio: 1; margin: 4px auto 20px; border: 9px solid color-mix(in srgb, var(--lks-accent) 18%, var(--lks-soft)); border-radius: 50%; background: repeating-radial-gradient(circle, #1f2a3a 0 2px, #101923 3px 5px); box-shadow: 0 16px 32px rgba(0,0,0,.18), 0 0 0 1px var(--lks-line); animation: lks-disc-spin 28s linear infinite; animation-play-state: paused; }
@@ -32,12 +33,10 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
 .is-playing .lks-room-disc { animation-play-state: running; }
 @keyframes lks-disc-spin { to { transform: rotate(360deg); } }
 .lks-room-playing-label { font-size: 10px; color: var(--lks-muted); letter-spacing: .2em; }
-/* min-height: 3em = 预留两行标题（line-height 1.5）。
-   歌名长短差很多：短的一行、长的折三行，左卡片就跟着忽高忽低 ——
-   用户看到的就是"有些歌卡片正常、有些被拉长"。预留两行之后，只要标题不超过两行，
-   换歌时整张卡的高度完全不变。（下面 .lks-room-artist 也早就留了 22px，同一个道理。） */
-.lks-music-room .lks-room-title { margin: 8px 0 5px; min-height: 3em; color: var(--font-color); font-size: clamp(20px, 2.1vw, 27px); line-height: 1.5; overflow-wrap: anywhere; }
-.lks-room-artist { min-height: 22px; margin: 0; font-size: 13px; color: var(--lks-muted); }
+.lks-room-artist { min-height: 22px; margin: 0; font-size: 13px; color: var(--lks-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 歌名/歌手都钉死在两行以内：高度只由这两块决定，换歌时整张左卡的高度就不会变
+   （原来长歌名会折到三五行，把左卡撑高，右卡跟着一起变高 —— 用户看到的就是"有些歌卡片正常、有些被拉长"）。 */
+.lks-music-room .lks-room-title { margin: 8px 0 5px; min-height: 3em; color: var(--font-color); font-size: clamp(20px, 2.1vw, 27px); line-height: 1.5; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 #article-container .lks-music-room .lks-room-title { width: 100%; margin: 8px 0 5px; padding: 0; text-align: center; font-size: clamp(20px, 2.1vw, 27px); }
 #article-container .lks-music-room :is(h1, h2)::before { display: none; }
 #article-container .lks-music-room :is(h1, h2):hover { padding-left: 0; }
@@ -60,10 +59,18 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
 .lks-room-tabs button { flex: 1; min-height: 38px; border: none; border-radius: 24px; background: transparent; color: var(--lks-muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .lks-room-tabs button[aria-selected='true'] { background: #246e9d; color: #fff; }
 .lks-room-tabs span { font-size: 10px; opacity: .75; margin-left: 3px; }
-.lks-room-library [role='tabpanel'] { min-height: 0; flex: 1; }
+/* 面板本身也做成纵向 flex：里面的歌词框/歌单框 flex: 1 撑满卡片里的剩余空间。
+   这样"右卡和左卡等高"靠的是面板填满，而不是把歌词框硬撑高 ——
+   歌词框被撑高正是原来"歌词被推到下半部分、上面一大片空白"的来源。 */
+.lks-room-library [role='tabpanel'] { min-height: 0; flex: 1; display: flex; flex-direction: column; }
 .lks-room-lyrics-panel { display: flex; flex-direction: column; }
 .lks-room-library [hidden], .lks-room-song[hidden] { display: none !important; }
-.lks-room-lyrics { position: relative; flex: none; min-height: 0; height: clamp(250px, 38vh, 420px); overflow: hidden; mask-image: linear-gradient(transparent, #000 14%, #000 85%, transparent); -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 85%, transparent); }
+/* flex: 1 1 0 + height: 0 —— height: 0 不能省。
+   网格行高是自动的，flex 项如果高度不确定，它里面那几十上百行歌词会被算进行高的固有尺寸：
+   实测 36 句歌词能把卡片从 661px 撑到 2740px（overflow: hidden 拦不住固有尺寸计算）。
+   给个确定高度（0）当 flex base，再靠 flex-grow 撑满卡片里剩下的空间，就既有界又能填满。
+   min-height 是下限：窗口很小的时候不至于压成一条缝。 */
+.lks-room-lyrics { position: relative; flex: 1 1 0; height: 0; min-height: clamp(240px, 30vh, 340px); overflow: hidden; mask-image: linear-gradient(transparent, #000 14%, #000 85%, transparent); -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 85%, transparent); }
 .lks-lyric-track { position: relative; transition: transform 480ms cubic-bezier(.22,.7,.2,1); }
 .lks-music-room .lks-lyric-line { display: block; width: 100%; margin: 0; padding: 17px 12px; min-height: 58px; border: 0; border-radius: 14px; background: transparent; color: var(--font-color); font: inherit; font-size: 16px; font-weight: 500; white-space: pre-line; line-height: 1.7; text-align: center; cursor: pointer; opacity: .25; transition: opacity 350ms ease, color 350ms ease, background-color 350ms ease; }
 .lks-music-room .lks-lyric-line[data-distance='1'] { opacity: .6; }
@@ -73,7 +80,7 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
 .lks-room-lyric-note { margin: 10px 0 0; font-size: 11px; color: var(--lks-muted); text-align: center; }
 .lks-room-search { display: flex; align-items: center; gap: 10px; margin: 6px 0 14px; padding: 10px 14px; border: 1px solid var(--lks-line); border-radius: 12px; color: var(--lks-muted); background: var(--lks-soft); }
 .lks-room-search input { width: 100%; min-width: 0; border: none; outline: none; background: transparent; color: var(--font-color); font: inherit; font-size: 14px; }
-.lks-room-queue { height: clamp(250px, 38vh, 420px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.lks-room-queue { flex: 1 1 0; height: 0; min-height: clamp(240px, 30vh, 340px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .lks-room-song { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px; border: none; border-bottom: 1px solid var(--lks-line); border-radius: 10px; background: transparent; color: var(--font-color); text-align: left; font: inherit; cursor: pointer; }
 .lks-room-song:hover { background: var(--lks-soft); }
 .lks-room-song.is-current { background: rgba(73,177,245,.12); color: var(--lks-accent); }
@@ -95,8 +102,8 @@ html[data-theme='dark'] .lks-music-room { --room-accent: #6bc5ff; }
   .lks-room-player { padding: 26px 22px 22px; border-radius: 22px; }
   .lks-room-disc { width: min(224px, 70%); margin-bottom: 20px; }
   .lks-room-library { padding: 18px 12px; border-radius: 22px; }
-  .lks-room-lyrics { min-height: 0; height: clamp(220px, 34vh, 320px); }
-  .lks-room-queue { height: clamp(220px, 34vh, 320px); }
+  .lks-room-lyrics { min-height: clamp(220px, 34vh, 320px); }
+  .lks-room-queue { min-height: clamp(220px, 34vh, 320px); }
   .lks-room-search input { font-size: 16px; }
   #page:has(.lks-music-room) > #post-comment { padding: 20px 16px; border-radius: 22px; }
   #subtitle.lks-listening { max-width: 86vw; font-size: 15px; }
