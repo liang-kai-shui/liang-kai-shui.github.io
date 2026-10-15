@@ -67,6 +67,39 @@ html { scroll-padding-top: 86px; }
 #nav #lks-music-toggle[aria-expanded='true'] { color: var(--lks-accent); }
 .post #page-header.not-top-img { height: 68px; }
 
+/* 壁纸类型选择浮层，背景加载和音乐一样不打断页面。 */
+#nav #lks-wallpaper-toggle[aria-expanded='true'] { color: var(--lks-accent); }
+.lks-wallpaper-panel { position: fixed; z-index: 1001; top: 82px; right: max(16px, calc((100vw - 1275px) / 2)); width: min(350px, calc(100vw - 32px)); max-height: calc(100svh - 100px); overflow-y: auto; overscroll-behavior: contain; padding: 20px; border: 1px solid var(--lks-line); border-radius: 16px; background: var(--lks-surface); color: var(--font-color); box-shadow: 0 12px 36px rgba(0, 0, 0, .2); font-size: 13px; line-height: 1.5; }
+.lks-wallpaper-panel[hidden] { display: none; }
+.lks-wallpaper-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lks-wallpaper-head strong { font-size: 17px; }
+.lks-wallpaper-close { border: 0; border-radius: 8px; background: var(--lks-soft); color: var(--lks-muted); width: 32px; height: 32px; font-size: 22px; cursor: pointer; }
+.lks-wallpaper-current { margin: 8px 0 18px; color: var(--lks-muted); font-size: 12px; }
+.lks-wallpaper-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.lks-wallpaper-fieldset legend { margin-bottom: 10px; padding: 0; font-size: 12px; color: var(--lks-muted); }
+.lks-wallpaper-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lks-wallpaper-option { position: relative; display: flex; align-items: center; gap: 7px; min-width: 0; padding: 10px; border: 1px solid transparent; border-radius: 10px; background: var(--lks-soft); cursor: pointer; }
+.lks-wallpaper-option:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.lks-wallpaper-option:has(input:checked) { border-color: var(--lks-accent); background: rgba(73, 177, 245, .1); }
+.lks-wallpaper-option input { width: 14px; height: 14px; flex: none; margin: 0; accent-color: var(--lks-accent); }
+.lks-wallpaper-option strong { display: block; font-size: 12px; font-weight: 600; }
+.lks-wallpaper-option small { display: block; margin-top: 3px; color: var(--lks-muted); font-size: 10px; line-height: 1.5; }
+.lks-wallpaper-hint { margin: 12px 0; color: var(--lks-muted); font-size: 11px; }
+.lks-wallpaper-refresh { display: block; width: 100%; min-height: 40px; border: 0; border-radius: 10px; background: #318ece; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.lks-wallpaper-refresh:hover { background: #257db8; }
+.lks-wallpaper-refresh:disabled { opacity: .65; cursor: wait; }
+.lks-wallpaper-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lks-wallpaper-download { min-height: 40px; border: 1px solid var(--lks-line); border-radius: 10px; background: var(--lks-soft); color: var(--font-color); font: inherit; font-size: 12px; cursor: pointer; }
+.lks-wallpaper-download:hover { border-color: var(--lks-accent); color: var(--lks-accent); }
+.lks-wallpaper-download:disabled { opacity: .55; cursor: default; }
+.lks-wallpaper-original { display: inline-block; margin-top: 10px; color: var(--lks-muted); font-size: 11px; }
+.lks-wallpaper-original[hidden] { display: none; }
+.lks-wallpaper-download-status { margin: 6px 0 0; color: var(--lks-muted); font-size: 11px; }
+.lks-wallpaper-download-status:empty { display: none; }
+.lks-wallpaper-download-status a { color: var(--lks-accent); text-decoration: underline; }
+.lks-wallpaper-status { min-height: 34px; margin: 12px 0 0; color: var(--lks-muted); font-size: 11px; }
+.lks-wallpaper-panel button:focus-visible, .lks-wallpaper-option:focus-within { outline: 2px solid var(--lks-accent); outline-offset: 3px; }
+
 /* 最近的内容放在前面，其余信息合并，侧栏不再堆独立的长卡片。 */
 #aside-content .card-widget { margin-bottom: 14px; }
 #aside-content .sticky_layout { position: static; }
@@ -253,7 +286,8 @@ html { scroll-padding-top: 86px; }
 @media (max-width: 768px) {
   #page-header #nav { height: 64px; padding: 0 8px 0 16px; }
   #page-header.nav-fixed:not(.fixed) #nav { top: -64px; }
-  #nav .lks-nav-tool { padding-left: 0; }
+  #page-header #nav .lks-nav-tool { padding: 0; }
+  .lks-wallpaper-panel { top: 74px; right: 12px; width: min(350px, calc(100vw - 24px)); max-height: calc(100svh - 88px); padding: 16px; }
   #nav .lks-nav-random { display: none; }
   #nav #search-button { margin-left: 0; }
   #nav #blog-info { min-width: 0; font-size: 15px; }

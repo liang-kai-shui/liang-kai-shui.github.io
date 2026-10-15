@@ -1,10 +1,10 @@
 /*!
- * 摸鱼小窝 · 每次刷新随机换底图
+ * 摸鱼小窝 · 随机底图与顶栏手动换壁纸
  *
  * 图源优先用「栗次元 API」（https://t.alcy.cc）：
  *   桌面端：二次元自适应 /ycy  ｜ PC 横图 /pc  ｜ ACG 动图 /acg   ← 按权重随机挑一个
  *   移动端：移动竖图 /mp                                        ← 屏幕窄就用竖图
- * 这些接口每次请求会 302 到一张随机图（/acg 是 mp4），所以：
+ * 使用接口的 ?json 输出取得固定原文件地址（实际返回纯文本 URL），所以：
  *   - 每次刷新都能换（URL 上带随机参数，绕开浏览器/CDN 缓存）
  *   - /acg 是视频，用 <video> 铺在背景层，不是 CSS background-image
  *
@@ -14,7 +14,7 @@
  *   1. 预加载成功才换上去，避免半张图闪一下
  *   2. 换的是网站背景底图 #web_bg；本来就有头图的非文章页（比如首页）头图跟着用同一张
  *   3. 文章页头图是文章自己的封面，不动它
- *   4. pjax 站内跳转不重新抽（同一张用到底，刷新才换）
+ *   4. pjax 站内跳转不重新抽；刷新页面或使用顶栏入口才换
  *   5. 动图在「系统开了减少动态效果」或「浏览器开了省流量」时自动跳过
  *
  * 由 _config.butterfly.yml → inject.bottom 引入。
@@ -55,6 +55,37 @@
   var currentUrl = null
   var currentSource = null
   var currentKind = null          // 'image' | 'video' | 'pool'
+  var pending = null
+  var loading = false
+  var message = ''
+  var TYPE_KEY = 'lks-bg-type'
+  var TYPES = [
+    { id: 'auto', label: '随机推荐', note: '按屏幕挑选，偶尔来张动态' },
+    { id: 'static', label: '静态随机', note: '只挑静态壁纸' },
+    { id: 'acg', label: '动态壁纸', note: '静音循环的动态背景' },
+    { id: 'ycy', label: '二次元插画', note: '根据屏幕自适应' },
+    { id: 'pc', label: '横屏插画', note: '适合电脑横屏' },
+    { id: 'mp', label: '手机竖图', note: '适合竖屏浏览' },
+    { id: 'pool', label: '收藏图池', note: '从博客自有图池挑一张' }
+  ]
+  var selectedType = 'auto'
+  try { selectedType = normalType(localStorage.getItem(TYPE_KEY)) } catch (e) {}
+
+  function normalType (type) { return TYPES.some(function (item) { return item.id === type }) ? type : 'auto' }
+  function setType (type) {
+    selectedType = normalType(type)
+    try { localStorage.setItem(TYPE_KEY, selectedType) } catch (e) {}
+    announce()
+  }
+  function announce () { document.dispatchEvent(new CustomEvent('lks:bg-change')) }
+  function alive (job) { return !job || !job.cancelled }
+  function discardVideo (video) {
+    if (!video) return
+    video.pause()
+    video.removeAttribute('src')
+    video.load()
+    video.remove()
+  }
 
   /* ------------------------- 小工具 ------------------------- */
 
@@ -83,7 +114,22 @@
 
   // 接口地址：带随机参数，绕开缓存，保证每次刷新都是一张新的
   function apiUrl (name) {
-    return API_BASE + '/' + name + '?r=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+    return API_BASE + '/' + name + '?json&r=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+  }
+
+  // 先固定这一张的地址，下载时不再访问随机接口，避免保存成另一张。
+  function resolveSource (source, job) {
+    var controller = new AbortController()
+    var timer = setTimeout(function () { controller.abort() }, 6000)
+    if (job) job.cancel.push(function () { controller.abort() })
+    return fetch(apiUrl(source.name), { signal: controller.signal, credentials: 'omit', cache: 'no-store' })
+      .then(function (res) { if (!res.ok) throw new Error('图源暂不可用'); return res.text() })
+      .then(function (text) {
+        var url = new URL(text.trim())
+        if (url.origin !== API_BASE || !/^\/pic\/[a-z0-9/_-]+\.(webp|png|jpe?g|gif|mp4|webm)$/i.test(url.pathname)) throw new Error('原文件地址不可用')
+        return url.href
+      })
+      .finally(function () { clearTimeout(timer) })
   }
 
   function injectStyleOnce () {
@@ -110,16 +156,18 @@
     if (!bg) return false
     bg.style.backgroundImage = 'url("' + url + '")'
     var video = document.getElementById(VIDEO_ID)
-    if (video) video.remove()      // 换成静态图时把上一个视频撤掉
+    discardVideo(video)
     return true
   }
 
-  function applyHeader (url) {
+  function applyHeader (url, kind) {
     var header = document.getElementById('page-header')
     if (!header) return false
     if (header.classList.contains('post-bg')) return false   // 文章页头图是这篇自己的封面
     if (!header.style.backgroundImage) return false          // 本来没头图的页面不硬塞
-    header.style.backgroundImage = 'url("' + url + '")'
+    if (header.lksOriginalBgColor === undefined) header.lksOriginalBgColor = header.style.backgroundColor
+    header.style.backgroundImage = kind === 'video' ? 'none' : 'url("' + url + '")'
+    header.style.backgroundColor = kind === 'video' ? 'transparent' : header.lksOriginalBgColor
     return true
   }
 
@@ -130,18 +178,30 @@
     try { localStorage.setItem(POOL.lastKey, url) } catch (e) { /* 隐私模式忽略 */ }
   }
 
-  function preloadImage (url) {
+  function preloadImage (url, job) {
     return new Promise(function (resolve) {
       var img = new Image()
-      img.onload = function () { resolve(true) }
-      img.onerror = function () { resolve(false) }
+      var done = false
+      var timer
+      var finish = function (ok) {
+        if (done) return
+        done = true
+        clearTimeout(timer)
+        img.onload = img.onerror = null
+        if (!ok) img.removeAttribute('src')
+        resolve(ok && alive(job))
+      }
+      if (job) job.cancel.push(function () { finish(false) })
+      img.onload = function () { finish(true) }
+      img.onerror = function () { finish(false) }
+      timer = setTimeout(function () { finish(false) }, 12000)
       img.src = url
     })
   }
 
-  function applyImage (url, source) {
-    return preloadImage(url).then(function (ok) {
-      if (!ok) return false
+  function applyImage (url, source, job) {
+    return preloadImage(url, job).then(function (ok) {
+      if (!ok || !alive(job)) return false
       var didBg = applyBackground(url)
       applyHeader(url)
       if (didBg) remember(url, source, 'image')
@@ -149,41 +209,46 @@
     })
   }
 
-  function applyVideo (url, source) {
+  function applyVideo (url, source, job) {
     var bg = document.getElementById('web_bg')
     if (!bg) return Promise.resolve(false)
 
     injectStyleOnce()
     return new Promise(function (resolve) {
-      var video = document.getElementById(VIDEO_ID)
-      if (!video) {
-        video = document.createElement('video')
-        video.id = VIDEO_ID
-        video.muted = true
-        video.loop = true
-        video.autoplay = true
-        video.playsInline = true
-        video.setAttribute('muted', '')
-        video.setAttribute('playsinline', '')
-        video.setAttribute('webkit-playsinline', '')
-        bg.appendChild(video)
-      }
+      // 先加载新视频，能播放后再替换；旧背景不会在加载期间消失。
+      var video = document.createElement('video')
+      video.id = VIDEO_ID
+      video.muted = true
+      video.loop = true
+      video.autoplay = true
+      video.playsInline = true
+      video.setAttribute('muted', '')
+      video.setAttribute('playsinline', '')
+      video.setAttribute('webkit-playsinline', '')
       var done = false
+      var timer
       var finish = function (ok) {
         if (done) return
         done = true
+        clearTimeout(timer)
+        video.oncanplay = video.onerror = null
+        ok = ok && alive(job)
         if (ok) {
+          discardVideo(document.getElementById(VIDEO_ID))
+          bg.appendChild(video)
+          applyHeader(url, 'video')
           remember(url, source, 'video')
           var p = video.play()
           if (p && p.catch) p.catch(function () { /* 自动播放被拦就静默降级成首帧 */ })
-        }
+        } else discardVideo(video)
         resolve(ok)
       }
-      video.addEventListener('canplay', function () { finish(true) }, { once: true })
-      video.addEventListener('error', function () { finish(false) }, { once: true })
+      if (job) job.cancel.push(function () { finish(false) })
+      video.oncanplay = function () { finish(true) }
+      video.onerror = function () { finish(false) }
+      timer = setTimeout(function () { finish(false) }, 12000)
       video.src = url
       video.load()
-      setTimeout(function () { finish(false) }, 12000)   // 12 秒还没就绪就算失败（mp4 有几 MB，慢网络会走到这里）
     })
   }
 
@@ -199,18 +264,22 @@
     return null
   }
 
-  function loadPool () {
+  function loadPool (job) {
     var cached = readPoolCache()
     if (cached) return Promise.resolve(cached)
-    return fetch(POOL.base + POOL.dir + 'list.json', { cache: 'no-cache' })
-      .then(function (res) { return res.json() })
+    var controller = new AbortController()
+    var timer = setTimeout(function () { controller.abort() }, 6000)
+    if (job) job.cancel.push(function () { controller.abort() })
+    return fetch(POOL.base + POOL.dir + 'list.json', { cache: 'no-cache', signal: controller.signal })
+      .then(function (res) { if (!res.ok) throw new Error('图池暂不可用'); return res.json() })
       .then(function (data) {
-        var list = (data && data.images) || []
+        var list = ((data && data.images) || []).filter(function (name) { return typeof name === 'string' && /^[a-z0-9_-]+\.(webp|png|jpg|jpeg)$/i.test(name) })
         if (!list.length) throw new Error('清单是空的')
         try { localStorage.setItem(POOL.cacheKey, JSON.stringify({ t: Date.now(), list: list })) } catch (e) { /* 忽略 */ }
         return list
       })
       .catch(function () { return POOL.fallback })
+      .finally(function () { clearTimeout(timer) })
   }
 
   function pickFromPool (list) {
@@ -222,57 +291,88 @@
     return pool[Math.floor(Math.random() * pool.length)]
   }
 
-  function usePool (why) {
+  function usePool (why, job) {
+    if (!alive(job)) return Promise.resolve(false)
     console.warn('[bg] 改用图床底图池兜底：' + why)
-    return loadPool().then(function (list) {
-      return applyImage(urlOf(pickFromPool(list)), { name: 'pool', label: '图床底图池' })
+    return loadPool(job).then(function (list) {
+      if (!alive(job)) return false
+      return applyImage(urlOf(pickFromPool(list)), { name: 'pool', label: '收藏图池' }, job)
     })
   }
 
   /* ------------------------- 主流程 ------------------------- */
 
-  function init () {
-    var override = urlOverride()
-    if (override === 'off' || override === 'none' || override === 'false') {
-      console.log('[bg] 网址带 bg=' + override + '，本次不换底图')
-      return Promise.resolve(false)
+  function change (type, persist) {
+    type = normalType(type)
+    if (pending) {
+      pending.cancelled = true
+      pending.cancel.forEach(function (cancel) { cancel() })
     }
-
+    var job = { cancelled: false, cancel: [] }
+    pending = job
+    selectedType = type
+    if (persist) { try { localStorage.setItem(TYPE_KEY, type) } catch (e) {} }
+    loading = true
+    message = '正在加载下一张壁纸，原来的先留着…'
+    announce()
     var mobile = isMobile()
     var list = mobile ? SOURCES.mobile : SOURCES.desktop
     var source = null
-
-    if (override) {
+    var limited = false
+    var fallback = false
+    if (type !== 'auto' && type !== 'static' && type !== 'pool') {
       var all = SOURCES.desktop.concat(SOURCES.mobile)
       for (var i = 0; i < all.length; i++) {
-        if (all[i].name === override) { source = all[i]; break }
+        if (all[i].name === type) { source = all[i]; break }
       }
-      if (source) console.log('[bg] 网址带 bg=' + override + '，强制使用「' + source.label + '」')
-      else console.warn('[bg] 不认识的 bg=' + override + '，按默认随机')
     }
-
     if (!source) {
       var candidates = list.filter(function (s) {
-        return !s.video || (USE_VIDEO && !prefersReducedMotion() && !saveDataOn())
+        return !s.video || (type !== 'static' && USE_VIDEO && !prefersReducedMotion() && !saveDataOn())
       })
       if (!candidates.length) candidates = list.filter(function (s) { return !s.video })
-      if (!candidates.length) return usePool('没有可用的接口')
-      source = weightedPick(candidates)
+      if (candidates.length) source = weightedPick(candidates)
     } else if (source.video && (!USE_VIDEO || prefersReducedMotion() || saveDataOn())) {
-      console.warn('[bg] 动图不可用（被设置或省流量模式禁用），换成静态图')
+      limited = true
       source = list.filter(function (s) { return !s.video })[0] || list[0]
     }
-
-    var url = apiUrl(source.name)
-    var label = source.label + '（' + (mobile ? '移动端' : '桌面端') + '）'
-
-    var task = source.video ? applyVideo(url, source) : applyImage(url, source)
+    var task
+    if (type === 'pool' || !source) task = usePool('选择收藏图池', job)
+    else {
+      task = resolveSource(source, job).then(function (url) {
+        if (!alive(job)) return false
+        return source.video ? applyVideo(url, source, job) : applyImage(url, source, job)
+      }).catch(function () { return false })
+      task = task.then(function (ok) {
+        if (ok || !alive(job)) return ok
+        fallback = true
+        message = '图源暂时没连上，正在试试收藏图池…'
+        announce()
+        return usePool(source.label + ' 加载失败', job)
+      })
+    }
     return task.then(function (ok) {
+      if (!alive(job)) return false
+      message = ok
+        ? (limited ? '系统开启了减少动态效果或省流量，改用静态壁纸。' : fallback ? '图源暂不可用，已换成收藏图池里的壁纸。' : '已换好 · ' + currentSource.label)
+        : '这次没有加载成功，原来的壁纸还在，可以再试一次。'
       if (ok) return true
-      return usePool(source.label + ' 加载失败')
-    }).catch(function (err) {
-      return usePool('出错了：' + (err && err.message))
+      return false
+    }).catch(function () {
+      if (alive(job)) message = '这次没有加载成功，原来的壁纸还在，可以再试一次。'
+      return false
+    }).finally(function () {
+      if (pending !== job) return
+      pending = null
+      loading = false
+      announce()
     })
+  }
+
+  function init () {
+    var override = urlOverride()
+    if (override === 'off' || override === 'none' || override === 'false') return Promise.resolve(false)
+    return change(override && TYPES.some(function (item) { return item.id === override }) ? override : selectedType, false)
   }
 
   // pjax 跳转后页面结构被换掉，把「本次会话选中的那张」贴回去（不重新抽）
@@ -283,6 +383,7 @@
       if (bg && !document.getElementById(VIDEO_ID)) {
         applyVideo(currentUrl, currentSource)
       }
+      applyHeader(currentUrl, 'video')
     } else {
       applyBackground(currentUrl)
       applyHeader(currentUrl)
@@ -292,12 +393,16 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)
   else init()
 
-  if (window.btf && window.btf.addGlobalFn) window.btf.addGlobalFn('pjaxComplete', reapply, 'lksBg')
   document.addEventListener('pjax:complete', reapply)
 
   // 方便自检脚本查看状态
   window.lksBg = {
     init: init,
+    refresh: function (type) { return change(type || selectedType, true) },
+    setType: setType,
+    type: function () { return selectedType },
+    types: function () { return TYPES.slice() },
+    state: function () { return { loading: loading, message: message, type: selectedType, source: currentSource, kind: currentKind } },
     current: function () { return currentUrl },
     source: function () { return currentSource },
     kind: function () { return currentKind },
