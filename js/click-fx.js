@@ -29,9 +29,11 @@
   // 想关掉整个特效：把 _config.butterfly.yml 里这行 <script src="/js/click-fx.js"></script> 删掉
   // （同时记得把 compare-with-original.js 里对应那条归一化也删掉）
 
-  // 拖尾常显还是按住才显示。true = 鼠标一动就有拖尾（库的招牌效果），
+  // 桌面精细指针移动时显示拖尾；触屏保持原生滚动。true = 鼠标一动就有拖尾，
   // 觉得晃眼就改成 false，那样只有按住指针拖的时候才出拖尾。
-  var TRAIL_ALWAYS = false
+  var pointer = window.matchMedia('(hover: hover) and (pointer: fine)')
+  var TRAIL_ALWAYS = pointer.matches
+  var starting = null
 
   // 特效的透明度，1 是库的默认值。觉得太抢眼可以降到 0.7 左右。
   var OPACITY = 0.9
@@ -50,10 +52,22 @@
     }
   }
 
+  // The pinned library creates a viewport overlay under body. Astro replaces body
+  // on navigation, so retain its mount parent inside the persistent runtime.
+  function retain () {
+    var fx = window.lksClickFx, runtime = document.getElementById('site-runtime')
+    if (!fx || !runtime || !fx.overlayRoot) return
+    fx.overlayMountParent = runtime
+    fx.overlayRoot.id = 'lks-click-fx-overlay'
+    if (fx.overlayRoot.parentNode !== runtime) runtime.appendChild(fx.overlayRoot)
+  }
+
   function start () {
     if (reducedMotion()) return
+    if (window.lksClickFx) { retain(); window.lksClickFx.setPaused(false); return }
+    if (starting) return starting
 
-    import(LIB).then(function (mod) {
+    starting = import(LIB).then(function (mod) {
       var BAClickFX = mod && mod.BAClickFX
       if (typeof BAClickFX !== 'function') {
         console.warn('[click-fx] 库里没导出 BAClickFX，跳过')
@@ -70,10 +84,11 @@
       fx.updateConfig({ trailAlways: TRAIL_ALWAYS, opacity: OPACITY })
       fx.setThemeColor(THEME_COLOR)
 
-      // pjax 站内跳转不重建实例：#page 之外的东西不会被换掉，画布留着就行。
-      // 万一哪天主题换成整页替换，这里重新初始化一次即可。
       window.lksClickFx = fx
+      retain()
+      fx.setPaused(reducedMotion(), { clear: true })
     }).catch(function (err) {
+      starting = null
       console.warn('[click-fx] 没加载起来：', err && err.message)
     })
   }
@@ -85,6 +100,18 @@
       setTimeout(fn, 1200)
     }
   }
+
+  document.addEventListener('astro:before-swap', retain)
+  document.addEventListener('astro:after-swap', retain)
+  document.addEventListener('pjax:complete', retain)
+  pointer.addEventListener('change', function () {
+    TRAIL_ALWAYS = pointer.matches
+    if (window.lksClickFx) window.lksClickFx.updateConfig({ trailAlways: TRAIL_ALWAYS })
+  })
+  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', function () {
+    if (window.lksClickFx) window.lksClickFx.setPaused(reducedMotion(), { clear: true })
+    else if (!reducedMotion()) whenIdle(start)
+  })
 
   // 等 load（图片什么的都别抢），再等浏览器空闲
   if (document.readyState === 'complete') whenIdle(start)
