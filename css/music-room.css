@@ -15,7 +15,7 @@
 .lks-type-caret { display: inline-block; margin-left: 3px; font-weight: 300; opacity: .85; animation: lks-type-blink 1s step-end infinite; }
 @keyframes lks-type-blink { 50% { opacity: 0; } }
 @keyframes lks-source-enter { from { opacity: 0; transform: translateY(3px); } to { opacity: .78; transform: translateY(0); } }
-@keyframes lks-lyric-enter { from { opacity: 0; transform: translateY(12px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+@keyframes lks-lyric-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes lks-lyric-leave { to { opacity: 0; transform: translateY(-10px); } }
 #content-inner:has(.lks-music-room) { display: block; max-width: 1200px; padding-top: 48px; }
 #content-inner > #page:has(.lks-music-room) { width: 100%; padding: 0; background: transparent !important; box-shadow: none; overflow: visible; }

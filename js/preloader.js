@@ -25,7 +25,10 @@
   }
   timer = setTimeout(end, 1800)
   box.addEventListener('click', end)
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, { once: true })
+  // 主体已解析就能阅读；DOMContentLoaded 还可能被页脚第三方脚本阻塞。
+  document.addEventListener('lks:content-ready', ready, { once: true })
+  if (document.getElementById('lks-content-ready')) ready()
+  else if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, { once: true })
   else ready()
   document.addEventListener('pjax:send', start)
   document.addEventListener('pjax:complete', end)

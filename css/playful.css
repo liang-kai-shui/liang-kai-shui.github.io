@@ -7,11 +7,13 @@
   #aside-content .card-widget {
     animation: lks-card-enter 280ms cubic-bezier(.2, .8, .2, 1) backwards;
   }
-  /* 个人信息卡片原本一直在做渐变，两个动画一起保留。 */
+  /* 渐变由独立背景层平移，卡片本身只做一次轻推入场。 */
   #aside-content > .card-widget.card-info {
-    animation: Gradient 10s ease infinite, lks-card-enter 280ms cubic-bezier(.2, .8, .2, 1) backwards !important;
+    animation: lks-card-enter 280ms cubic-bezier(.2, .8, .2, 1) backwards !important;
   }
 }
+/* 背景和装饰画布不再耗时 4 秒从全透明浮现；滚动模糊仍由 bg.js 控制。 */
+#web_bg, canvas:not(#ribbon-canvas) { animation: none !important; }
 @keyframes lks-card-enter {
   from { opacity: .92; transform: translateY(10px) scale(.99); }
   to { opacity: 1; transform: none; }
