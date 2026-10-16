@@ -126,7 +126,7 @@
     }, { passive: true })
     box.addEventListener('touchend', function () { touchStartY = 0 }, { passive: true })
 
-    document.body.appendChild(box)
+    ;(document.getElementById('site-runtime') || document.body).appendChild(box)
   }
 
   function open (img) {
@@ -134,7 +134,7 @@
     boxImg.src = img.currentSrc || img.src
     boxImg.alt = img.alt || ''
     boxHint.textContent = (img.alt ? img.alt + ' · ' : '') + '点空白处或按 Esc 关闭'
-    document.body.appendChild(box)
+    ;(document.getElementById('site-runtime') || document.body).appendChild(box)
     lightboxOpen = true
     lockScroll(true)
     // 下一帧再加 show，否则 transition 不生效

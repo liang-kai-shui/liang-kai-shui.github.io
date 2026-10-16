@@ -1,0 +1,5 @@
+Butterfly 5.3.3 CSS snapshot
+MIT License
+Copyright (c) 2019 Jerry C
+https://github.com/jerryc127/hexo-theme-butterfly/blob/5.3.3/LICENSE
+Original project stylesheet retained during the Astro migration. No Hexo runtime is used.

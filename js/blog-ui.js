@@ -59,10 +59,19 @@
     var title = element('a', 'article-title', post.title)
     title.href = post.url
     var meta = element('div', 'article-meta-wrap')
-    var date = element('time', '', post.date)
-    date.dateTime = post.date
-    meta.appendChild(date)
-    post.categories.forEach(function (category) { meta.appendChild(element('span', 'lks-card-category', category)) })
+    function separator () { meta.appendChild(element('span', 'article-meta-separator', '|')) }
+    function field (icon, text, href) {
+      var item = element('span', 'article-meta')
+      var glyph = element('i', icon); glyph.setAttribute('aria-hidden', 'true'); item.appendChild(glyph)
+      var label = element(href ? 'a' : 'span', '', text)
+      if (href) label.href = href
+      item.appendChild(label); meta.appendChild(item)
+    }
+    function slug (name) { return name === 'C++' ? 'C' : name.replace(/\s+/g, '-') }
+    field('far fa-calendar-alt', '发表于 ' + post.date)
+    separator(); field('fas fa-history', '更新于 ' + (post.updated || post.date))
+    post.categories.forEach(function (name) { separator(); field('fas fa-inbox', name, '/categories/' + encodeURIComponent(slug(name)) + '/') })
+    ;(post.tags || []).forEach(function (name) { separator(); field('fas fa-tag', name, '/tags/' + encodeURIComponent(slug(name)) + '/') })
     info.appendChild(title)
     info.appendChild(meta)
     info.appendChild(element('div', 'content', post.summary))
@@ -367,7 +376,7 @@
       parking = element('div')
       parking.id = 'lks-music-parking'
       parking.hidden = true
-      document.body.appendChild(parking)
+      ;(document.getElementById('site-runtime') || document.body).appendChild(parking)
     }
     if (!drawer) {
       drawer = element('section', 'lks-music-drawer')
@@ -383,7 +392,7 @@
       header.appendChild(close)
       drawer.appendChild(header)
       drawer.appendChild(element('div', 'lks-music-host'))
-      document.body.appendChild(drawer)
+      ;(document.getElementById('site-runtime') || document.body).appendChild(drawer)
     }
     syncMusicButton()
   }

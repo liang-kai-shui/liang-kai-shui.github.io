@@ -24,6 +24,7 @@
 (function () {
   'use strict'
 
+  var clockInterval = null, cachedWeather = null;
   var DEFAULT_CITY = '长沙市'
   var WEEK = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
@@ -176,6 +177,7 @@
   }
 
   function render(info, city) {
+    cachedWeather = {info:info, city:city};
     var box = document.getElementById('hexo_electric_clock')
     if (!box) return
 
@@ -214,7 +216,7 @@
       if (a) a.innerHTML = ampm
     }
 
-    setInterval(updateTime, 1000)
+    clearInterval(clockInterval); clockInterval = setInterval(updateTime, 1000)
     updateTime()
   }
 
@@ -232,6 +234,7 @@
       .catch(function (err) { console.error('[clock] 天气数据获取失败：', err) })
   }
 
+  document.addEventListener('pjax:complete', function () { if (cachedWeather) render(cachedWeather.info, cachedWeather.city) });
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init)
   } else {

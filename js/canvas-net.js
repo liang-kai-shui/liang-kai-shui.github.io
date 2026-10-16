@@ -11,7 +11,7 @@
   canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;'
   canvas.style.zIndex = script.getAttribute('zIndex') || '-1'
   canvas.style.opacity = script.getAttribute('opacity') || '.7'
-  document.body.appendChild(canvas)
+  ;(document.getElementById('site-runtime') || document.body).appendChild(canvas)
   var color = script.getAttribute('color') || '0,0,255'
   var wanted = Math.max(1, Math.min(150, Number(script.getAttribute('count')) || 99))
   var width = 0, height = 0, points = [], frame = 0, last = 0, narrow = false

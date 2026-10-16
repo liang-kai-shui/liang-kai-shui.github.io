@@ -104,11 +104,11 @@
     var path = currentPath()
     var referrerHost = ''
     try { if (document.referrer) referrerHost = new URL(document.referrer).hostname } catch (e) {}
-    api('/api/pv', {
+    (window.LKS_PREVIEW ? api('/api/pv?paths=' + encodeURIComponent(path)).then(function (data) { var row = data[path]; return { views: typeof row === 'number' ? row : row && row.views || 0 } }) : api('/api/pv', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ path: path, referrerHost: referrerHost })
-    })
+    }))
       .then(function (data) { fill('busuanzi_value_page_pv', data.views) })
       .catch(function (err) {
         console.warn('[stats] 记录浏览失败：', err.message)

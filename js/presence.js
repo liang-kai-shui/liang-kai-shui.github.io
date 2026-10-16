@@ -70,6 +70,7 @@
   }
 
   function connect (run) {
+    if (window.LKS_PREVIEW) return
     if (run !== generation || document.hidden || socket || !window.WebSocket) return
     var url = API.replace(/^http/i, 'ws') + '/api/presence/socket?path=' + encodeURIComponent(path)
     try { socket = new WebSocket(url) } catch (e) { socket = null; return }

@@ -1,0 +1,21 @@
+.lks-support { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:18px; margin:42px 0; padding:22px; border:1px solid rgba(73,177,245,.2); border-radius:16px; background:linear-gradient(120deg,rgba(73,177,245,.07),rgba(123,103,239,.07)); text-align:left; }
+.lks-support-copy { display:grid; gap:4px; }
+.lks-support-copy strong { color:var(--font-color); font-size:17px; }
+.lks-support-copy span { color:var(--font-color); opacity:.65; font-size:13px; }
+.lks-support [data-support-open] { display:flex; gap:9px; align-items:center; border:0; border-radius:24px; padding:11px 22px; color:#fff; background:linear-gradient(110deg,#3196c9,#596bdd); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; box-shadow:0 5px 20px #388ed329; transition:transform .2s,box-shadow .2s; }
+.lks-support [data-support-open]:is(:hover,:focus-visible) { transform:translateY(-3px); box-shadow:0 9px 25px #388ed34d; }
+#lks-support-dialog { box-sizing:border-box; position:fixed; inset:0; margin:auto; width:min(410px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:30px 26px 24px; border:1px solid #ffffff20; border-radius:24px; background:#f8fbff; color:#263548; text-align:center; box-shadow:0 28px 100px #0006; }
+[data-theme=dark] #lks-support-dialog { background:#181e28; color:#e1e8f1; }
+#lks-support-dialog::backdrop { background:#081423a6; backdrop-filter:blur(7px); }
+#lks-support-dialog .lks-support-close { position:absolute; top:10px; right:13px; width:32px; height:32px; border:0; border-radius:50%; background:transparent; color:inherit; font-size:26px; cursor:pointer; }
+#lks-support-dialog .lks-support-symbol { width:46px; height:46px; margin:0 auto 10px; border-radius:16px; background:#49b1f51c; color:#49b1f5; font:32px/46px sans-serif; }
+#lks-support-dialog .lks-support-eyebrow { margin:0; color:#7894aa; letter-spacing:2px; font:10px/2 sans-serif; }
+#lks-support-dialog h2 { margin:6px 0 10px; color:inherit; font-size:24px; }
+#lks-support-dialog .lks-support-caption { margin:0 0 20px; font-size:13px; line-height:1.8; opacity:.75; }
+#lks-support-dialog .lks-support-qr { display:block; box-sizing:content-box; width:200px; margin:auto; padding:12px; background:#fff; border-radius:14px; box-shadow:0 5px 20px #0001; }
+#lks-support-dialog .lks-support-qr img { display:block; width:200px; height:auto; margin:0; border-radius:0; }
+#lks-support-dialog .lks-support-payment { margin:13px 0 5px; font-size:13px; }
+#lks-support-dialog .lks-support-note { margin:0; font-size:11px; opacity:.55; }
+#lks-support-dialog[open] { animation:lks-support-in .22s ease-out; }
+@keyframes lks-support-in { from{opacity:0;transform:translateY(12px) scale(.98)} to{opacity:1;transform:none} }
+@media(prefers-reduced-motion:reduce){#lks-support-dialog[open]{animation:none}.lks-support [data-support-open]{transition:none}}

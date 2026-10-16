@@ -395,11 +395,11 @@
 
   document.addEventListener('pjax:complete', reapply)
 
-  // 只处理背景层，标题和正文保持清晰；最大 5px，回到顶部恢复原图。
+  // 只处理背景层，标题和正文保持清晰；仅主页顶部清晰，其他页面固定 5px。
   var blurFrame = 0
   function updateBlur () {
     blurFrame = 0
-    var progress = Math.min(1, Math.max(0, window.scrollY / Math.max(320, window.innerHeight * .75)))
+    var progress = location.pathname === '/' ? Math.min(1, Math.max(0, window.scrollY / Math.max(320, window.innerHeight * .75))) : 1
     document.documentElement.style.setProperty('--lks-bg-blur', (progress * 5).toFixed(2) + 'px')
     document.documentElement.style.setProperty('--lks-bg-scale', (1 + progress * .025).toFixed(4))
   }

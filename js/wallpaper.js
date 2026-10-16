@@ -70,7 +70,7 @@
         // 临时下载链接在面板外，不触发面板的“点击外部收起”。
         link.addEventListener('click', function (event) { event.stopPropagation() })
         link.download = 'lks-wallpaper-' + Date.now() + '.' + extension
-        document.body.appendChild(link)
+        ;(document.getElementById('site-runtime') || document.body).appendChild(link)
         link.click()
         link.remove()
         setTimeout(function () { URL.revokeObjectURL(objectUrl) }, 60000)
@@ -138,7 +138,7 @@
     downloadStatus = node('p', 'lks-wallpaper-download-status')
     downloadStatus.setAttribute('role', 'status')
     panel.append(header, current, fieldset, hint, actions, original, status, downloadStatus)
-    document.body.appendChild(panel)
+    ;(document.getElementById('site-runtime') || document.body).appendChild(panel)
     sync()
   }
 

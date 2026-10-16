@@ -361,7 +361,7 @@
     panel.appendChild(body)
     root.appendChild(launcher)
     root.appendChild(panel)
-    document.body.appendChild(root)
+    ;(document.getElementById('site-runtime') || document.body).appendChild(root)
 
     launcher.addEventListener('click', togglePanel)
     close.addEventListener('click', function () { setOpen(false) })
@@ -407,10 +407,10 @@
     if (open) {
       checkChat().then(function (ok) {
         if (!ok) {
-          // 后端没开聊天：直接把换装页摆出来，省得访客点进去看到一句"没开通"
-          tabChat.hidden = true
-          switchTab('skin')
-          tip.textContent = ''
+          tabChat.hidden = false
+          switchTab('chat')
+          tip.textContent = window.LKS_PREVIEW ? '本地预览暂不发送聊天；正式站连接可用后即可聊天。换装仍可使用。' : 'AI 服务暂未连接，稍后重新打开可重试。换装仍可使用。'
+          chatReady = null
         } else {
           tabChat.hidden = false
           switchTab('chat')
@@ -473,6 +473,8 @@
 
   function submitMsg () {
     if (sending) return
+    if(window.LKS_PREVIEW){tip.textContent='本地预览暂不发送聊天。';return}
+    if(chatReady!==true){tip.textContent='AI 服务暂未连接，请稍后重新打开再试。';return}
     var text = (input.value || '').trim()
     if (!text) return
     input.value = ''
