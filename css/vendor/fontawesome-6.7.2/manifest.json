@@ -3,20 +3,20 @@
   "fonts": [
     {
       "font": "fa-brands-400",
-      "glyphs": 2,
-      "siteBytes": 1020,
+      "glyphs": 7,
+      "siteBytes": 1936,
       "originalBytes": 118684
     },
     {
       "font": "fa-regular-400",
       "glyphs": 17,
-      "siteBytes": 3024,
+      "siteBytes": 3088,
       "originalBytes": 25472
     },
     {
       "font": "fa-solid-900",
-      "glyphs": 81,
-      "siteBytes": 7128,
+      "glyphs": 59,
+      "siteBytes": 5872,
       "originalBytes": 158220
     }
   ]

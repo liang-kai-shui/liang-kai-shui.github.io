@@ -6,9 +6,8 @@
  *
  * 三个决定，都是踩过坑之后选的：
  *
- * 1. **加载时机放在页面 load 之后、浏览器空闲时**。这个库 621KB（gzip 还有 240KB），
- *    塞进主流程会让首屏明显变慢。推迟加载的代价是"进站第一秒内点击看不到特效"，
- *    我认为比拖慢首屏划算。用 requestIdleCallback，不支持就退回 setTimeout。
+ * 1. **首次鼠标移动或触屏点击时加载**。这个库 621KB（gzip 还有 240KB），
+ *    不参与首屏启动；加载期间的第一次点击会在准备好后补播。
  *
  * 2. **动态 import，静态文件不进 HTML**。这样页面里只会多一个 <script src="/js/click-fx.js">，
  *    库本身是运行时才去拉的（也顺带让还原度校验少一条归一化规则）。
@@ -34,6 +33,8 @@
   var pointer = window.matchMedia('(hover: hover) and (pointer: fine)')
   var TRAIL_ALWAYS = pointer.matches
   var starting = null
+  var pendingTap = null
+  var interacted = false
 
   // 特效的透明度，1 是库的默认值。觉得太抢眼可以降到 0.7 左右。
   var OPACITY = 0.9
@@ -87,18 +88,11 @@
       window.lksClickFx = fx
       retain()
       fx.setPaused(reducedMotion(), { clear: true })
+      if (pendingTap && !reducedMotion()) { fx.boom(pendingTap.x, pendingTap.y); pendingTap = null }
     }).catch(function (err) {
       starting = null
       console.warn('[click-fx] 没加载起来：', err && err.message)
     })
-  }
-
-  function whenIdle (fn) {
-    if (typeof window.requestIdleCallback === 'function') {
-      window.requestIdleCallback(fn, { timeout: 3000 })
-    } else {
-      setTimeout(fn, 1200)
-    }
   }
 
   document.addEventListener('astro:before-swap', retain)
@@ -110,10 +104,17 @@
   })
   window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', function () {
     if (window.lksClickFx) window.lksClickFx.setPaused(reducedMotion(), { clear: true })
-    else if (!reducedMotion()) whenIdle(start)
+    else if (!reducedMotion() && interacted) start()
   })
 
-  // 等 load（图片什么的都别抢），再等浏览器空闲
-  if (document.readyState === 'complete') whenIdle(start)
-  else window.addEventListener('load', function () { whenIdle(start) })
+  // No heavy decorative library during an untouched first paint. On desktop,
+  // mouse movement starts the native trail; a first tap is replayed once ready.
+  function activate (event) {
+    interacted = true
+    if (reducedMotion()) return
+    if (event.type === 'pointerdown' && !window.lksClickFx) pendingTap = { x: event.clientX, y: event.clientY }
+    start()
+  }
+  window.addEventListener('pointermove', activate, { once: true, passive: true })
+  window.addEventListener('pointerdown', activate, { passive: true })
 })()

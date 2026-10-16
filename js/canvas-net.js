@@ -17,6 +17,7 @@
   var width = 0, height = 0, points = [], frame = 0, last = 0, narrow = false
   var pointer = { x: -1000, y: -1000 }, stats = { frames: 0, checks: 0, lines: 0, particles: 0, fps: 24 }
   var distance = 125
+  var paths = Array.from({ length: 8 }, function () { return [] })
   function resize () {
     width = innerWidth; height = innerHeight; narrow = width <= 768
     var ratio = Math.min(devicePixelRatio || 1, narrow ? 1.25 : 1.5)
@@ -30,7 +31,9 @@
   function draw (dt) {
     ctx.clearRect(0, 0, width, height)
     var cells = new Map(), size = distance, limit = distance * distance
-    stats.checks = 0; stats.lines = 0
+    stats.checks = 0; stats.lines = 0; stats.strokes = 0
+    paths.forEach(function (bucket) { bucket.length = 0 })
+    ctx.fillStyle = 'rgba(' + color + ',.35)'
     points.forEach(function (p, i) {
       p.x += p.vx * dt; p.y += p.vy * dt
       if (p.x < 0 || p.x > width) { p.vx *= -1; p.x = Math.max(0, Math.min(width, p.x)) }
@@ -40,11 +43,11 @@
       var key = Math.floor(p.x / size) + ',' + Math.floor(p.y / size)
       if (!cells.has(key)) cells.set(key, [])
       cells.get(key).push(i)
-      ctx.fillStyle = 'rgba(' + color + ',.35)'; ctx.fillRect(p.x, p.y, 1, 1)
+      ctx.fillRect(p.x, p.y, 1, 1)
     })
     function link (p, q, alpha) {
-      ctx.strokeStyle = 'rgba(' + color + ',' + alpha.toFixed(3) + ')'
-      ctx.lineWidth = .6; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ++stats.lines
+      var bucket = paths[Math.max(0, Math.min(7, Math.floor(alpha / .65 * 8)))]
+      bucket.push(p.x, p.y, q.x, q.y); ++stats.lines
     }
     points.forEach(function (p, i) {
       var cx = Math.floor(p.x / size), cy = Math.floor(p.y / size), links = 0
@@ -59,6 +62,14 @@
       }
       var dx = pointer.x - p.x, dy = pointer.y - p.y, d = dx * dx + dy * dy
       if (d < 180 * 180) link(p, pointer, (1 - d / (180 * 180)) * .65)
+    })
+    ctx.lineWidth = .6
+    paths.forEach(function (bucket, i) {
+      if (!bucket.length) return
+      ctx.strokeStyle = 'rgba(' + color + ',' + ((i + .5) / 8 * .65) + ')'
+      ctx.beginPath()
+      for (var k = 0; k < bucket.length; k += 4) { ctx.moveTo(bucket[k], bucket[k + 1]); ctx.lineTo(bucket[k + 2], bucket[k + 3]) }
+      ctx.stroke(); ++stats.strokes
     })
     ++stats.frames
   }

@@ -1562,7 +1562,7 @@ blockquote > :last-child {
   --hlexpand-bg: linear-gradient(180deg, rgba(23,23,23,0.6), rgba(23,23,23,0.9));
 }
 @-moz-document url-prefix() {
-  scrollbar-color: var(--hlscrollbar-bg) transparent;
+  :root { scrollbar-color: var(--hlscrollbar-bg) transparent; }
 }
 figure.highlight table::-webkit-scrollbar-thumb {
   background: var(--hlscrollbar-bg);

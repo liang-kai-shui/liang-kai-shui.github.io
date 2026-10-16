@@ -43,7 +43,7 @@
       img.src = thumbnail ? thumbnail.src : post.cover
       if (variants.length) {
         img.srcset = variants.map(function (item) { return item.src + ' ' + item.width + 'w' }).join(', ')
-        img.sizes = '(max-width: 768px) calc(100vw - 32px), (max-width: 1200px) 40vw, 480px'
+        img.sizes = '(max-width: 768px) calc(100vw - 24px), (max-width: 900px) 42vw, (max-width: 1320px) 30vw, 401px'
         img.width = thumbnail.width; img.height = thumbnail.height
       }
       img.alt = post.title
@@ -440,16 +440,23 @@
   }
 
   function playerLibrary () {
-    return new Promise(function (resolve, reject) {
-      var attempts = 0
-      function check () {
-        var stylesheet = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).find(function (link) { return /aplayer.*\.css/i.test(link.href) })
-        if (window.APlayer && stylesheet && stylesheet.sheet && stylesheet.media !== 'print') return resolve()
-        if (++attempts >= 100) return reject(new Error('播放器没有加载成功'))
-        setTimeout(check, 150)
-      }
-      check()
+    return window.lksLoadPlayer().then(function () {
+      if (getComputedStyle(document.documentElement).getPropertyValue('--lks-player-css-ready').trim() !== '1') throw new Error('播放器样式没有加载成功')
     })
+  }
+
+  var musicObserver = null
+  function scheduleMusic () {
+    if (musicObserver) musicObserver.disconnect()
+    if (musicPlayer) return
+    if (document.querySelector('.lks-music-engine') || (drawer && !drawer.hidden)) { ensureMusic(); return }
+    var card = document.querySelector('#aside-content .lks-music-card')
+    if (!card || innerWidth <= 900) return
+    if (!('IntersectionObserver' in window)) { ensureMusic(); return }
+    musicObserver = new IntersectionObserver(function (entries) {
+      if (entries.some(function (entry) { return entry.isIntersecting })) { musicObserver.disconnect(); ensureMusic() }
+    }, { rootMargin: '180px' })
+    musicObserver.observe(card)
   }
 
   function musicFailure () {
@@ -648,7 +655,7 @@
     if (event.key === 'Escape' && drawer && !drawer.hidden) { toggleMusic(false); document.getElementById('lks-music-toggle')?.focus() }
   })
   document.addEventListener('pjax:send', function () { if (musicWrapper) parking.appendChild(musicWrapper) })
-  window.addEventListener('resize', function () { mountMusic(); if (window.innerWidth > 900) ensureMusic() })
+  window.addEventListener('resize', function () { mountMusic(); scheduleMusic() })
 
   /* ---------------------- 导航与初始化 ---------------------- */
   function selectRecentTab (card, selected, focus) {
@@ -726,7 +733,7 @@
     initRecent()
     initMusicShell()
     mountMusic()
-    if (window.innerWidth > 900 || document.querySelector('.lks-music-engine')) ensureMusic()
+    scheduleMusic()
     var root = document.querySelector('.lks-category-bar') && document.querySelector('#recent-posts')
     home = root ? { root: root, original: Array.from(root.querySelector('.recent-post-items').children) } : null
     var calendar = document.querySelector('.lks-activity-card')
