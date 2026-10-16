@@ -87,26 +87,5 @@
 @font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/85-373a1e0a3b.woff2') format('woff2');unicode-range:U+9EF0-9FA5,U+E23C,U+E247,U+E25F,U+E276,U+E283,U+E287,U+E293-E294,U+E2A3,U+E2B3,U+E2B5,U+E2B9,U+E2D9,U+E2E2,U+E2F4,U+E300,U+E308,U+E30F,U+E312-E314,U+E328,U+E33F,U+E354,U+E356-E358,U+E35D,U+E3AC-E3AD,U+E3D4,U+E3DA,U+E3EE,U+E3F1,U+E766-E76C,U+E76E-E78E}
 @font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/86-84d4aca9b0.woff2') format('woff2');unicode-range:U+E78F-E7BB,U+E7C7-E7E1,U+E7FE-E7FF,U+E801-E80F,U+E815-E864,U+F92C,U+F979,U+F995,U+F9E7,U+F9F1,U+FA0C-FA0F,U+FA11,U+FA13-FA14,U+FA18,U+FA1F-FA21,U+FA23-FA24,U+FA27-FA29,U+FB01-FB02,U+FE30-FE44,U+FE49-FE4F,U+FF01-FF0B,U+FF0D-FF19,U+FF1B-FF26}
 @font-face{font-family:LksZhuZi;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zhuzi/87-ed2ad5b481.woff2') format('woff2');unicode-range:U+FF27-FF5E,U+FFE0-FFE5}
-
-/* ------------------------------------------------------------------
-   电子钟那三处文字以前会拉下 4.5MB 的完整字库，原因在插件自己的 CSS
-   （CDN 上的 hexo-butterfly-clock-anzhiyu@1.1.9/lib/clock.min.css）：
-
-     @font-face{font-family:ZhuZiAYuanJWD;src:url(.../anzhiyu-blog@1.1.6/fonts/ZhuZiAWan.woff2);
-                font-display:swap;font-weight:lighter}
-     span.card-clock-weather,.card-clock-location,.card-clock-windDir{font-family:"ZhuZiAYuanJWD"}
-
-   它和我们的分片**撞了同一个 family 名**，而且没有 unicode-range（等于覆盖全部字符），
-   字重又是 lighter —— 于是只要那三处文字用它，浏览器就会把整份中文子集拉下来，
-   分片永远抢不过（分片有 unicode-range，插件那条没有）。
-
-   处理：① 分片的 family 改名成 LksZhuZi（唯一名字，插件那条就再没元素引用了）；
-        ② 把电子钟那三处显式指回分片，观感不变（同一套字形）。
-   改 family 名时记得同步 tools/prepare-performance-assets.py，否则重新生成会退回原名。
-   ------------------------------------------------------------------ */
-.card-clock-weather,
-.card-clock-location,
-.card-clock-windDir {
-  font-family: LksZhuZi, -apple-system, "Microsoft YaHei", sans-serif !important;
-  font-weight: 400 !important;
-}
+/* 电子钟使用同字形分片，避免触发插件声明的完整字库。 */
+.card-clock-weather,.card-clock-location,.card-clock-windDir{font-family:LksZhuZi,-apple-system,"Microsoft YaHei",sans-serif!important;font-weight:400!important}
