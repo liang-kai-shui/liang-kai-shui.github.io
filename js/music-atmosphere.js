@@ -5,7 +5,9 @@
   var images = new Map(), palette = { h: 205, s: 40, h2: 234, source: 'fallback' }
   var motion = matchMedia('(prefers-reduced-motion: reduce)')
   var audioContext = null, analyser = null, stream = null, source = null, audioTrack = null
-  var spectrumFrame = 0, lastFrame = 0, bins = null, levels = new Float32Array(40)
+  var spectrumFrame = 0, lastFrame = 0, bins = null, levels = new Float32Array(64), settleStarted = 0
+  var settleFrom = new Float32Array(64), drawTime = 0, pauseDuration = 240
+  var discFrame = 0, discTime = 0, discAngle = 0, discSpeed = 0
   var visible = true, enabled = true, observer = null, spectrumState = ''
   var captureAudio = null, captureFailed = false
 
@@ -134,8 +136,8 @@
     try {
       if (!audioContext) {
         audioContext = new Context()
-        analyser = audioContext.createAnalyser(); analyser.fftSize = 512; analyser.smoothingTimeConstant = .8
-        analyser.minDecibels = -75; analyser.maxDecibels = -5
+        analyser = audioContext.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = .22
+        analyser.minDecibels = -85; analyser.maxDecibels = -12
         bins = new Uint8Array(analyser.frequencyBinCount)
       }
       if (!stream) {
@@ -156,44 +158,104 @@
     if (canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)) { canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio) }
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0); ctx.clearRect(0, 0, width, height)
     if (live && analyser) analyser.getByteFrequencyData(bins)
-    var gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, 'hsla(' + palette.h + ', ' + palette.s + '%, 65%, .75)')
-    gradient.addColorStop(1, 'hsla(' + palette.h2 + ', ' + palette.s + '%, 55%, .3)')
+    var gradient = ctx.createLinearGradient(0, 0, width, 0)
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+    var light = dark ? 65 : 41, saturation = Math.max(64, palette.s)
+    gradient.addColorStop(0, 'hsl(' + ((palette.h + 325) % 360) + ', ' + saturation + '%, ' + light + '%)')
+    gradient.addColorStop(.5, 'hsl(' + palette.h + ', ' + saturation + '%, ' + (light + 5) + '%)')
+    gradient.addColorStop(1, 'hsl(' + ((palette.h + 65) % 360) + ', ' + saturation + '%, ' + light + '%)')
+    ctx.strokeStyle = dark ? 'rgba(255,255,255,.045)' : 'rgba(30,50,70,.055)'
+    ctx.lineWidth = 1; ctx.beginPath()
+    for (var row = 1; row <= 3; row++) { var y = Math.round((height - 4) * row / 4) + .5; ctx.moveTo(0, y); ctx.lineTo(width, y) }
+    ctx.stroke()
     ctx.fillStyle = gradient
-    var gap = width < 270 ? 3 : 4, barWidth = (width - gap * (levels.length - 1)) / levels.length, peak = 0
+    var gap = width < 240 ? 1 : 1.5, barWidth = (width - gap * (levels.length - 1)) / levels.length, peak = 0, visualPeak = 0
+    var dt = drawTime ? clamp(timestamp - drawTime, 8, 80) : 16
+    drawTime = timestamp
+    var maxBin = analyser ? Math.min(bins.length - 1, Math.floor(16000 / audioContext.sampleRate * analyser.fftSize)) : 700
+    var settle = clamp(1 - (timestamp - settleStarted) / pauseDuration, 0, 1)
+    ctx.beginPath()
     for (var i = 0; i < levels.length; i++) {
-      // 对数频段平均，左右镜像形成低矮、收束的频谱。
-      var band = i < 20 ? 19 - i : i - 20
-      var from = Math.floor(Math.pow(band / 20, 1.8) * 170) + 1
-      var to = Math.max(from + 1, Math.floor(Math.pow((band + 1) / 20, 1.8) * 170) + 1)
+      // 从左到右是低频至高频，不镜像；保留鼓点的尖峰和高频细节。
+      var from = Math.floor(Math.pow(i / levels.length, 1.55) * maxBin) + 1
+      var to = Math.max(from + 1, Math.floor(Math.pow((i + 1) / levels.length, 1.55) * maxBin) + 1)
       var value = 0
       if (live && bins) { for (var k = from; k < to; k++) value += bins[k] || 0; value = value / (to - from) / 255 }
-      levels[i] += (value - levels[i]) * .35
+      var target = Math.min(.98, Math.pow(value, .85) * 1.1)
+      if (live) levels[i] += (target - levels[i]) * (1 - Math.exp(-dt / (target > levels[i] ? 12 : 45)))
+      else levels[i] = settleFrom[i] * settle * settle
+      if (levels[i] < .002) levels[i] = 0
       peak = Math.max(peak, value)
-      var barHeight = 2 + levels[i] * (height - 9)
-      ctx.beginPath(); ctx.roundRect(i * (barWidth + gap), (height - barHeight) / 2, barWidth, barHeight, Math.min(2, barWidth / 2)); ctx.fill()
+      visualPeak = Math.max(visualPeak, levels[i])
+      var barHeight = 1.5 + levels[i] * (height - 6)
+      ctx.rect(i * (barWidth + gap), height - 2 - barHeight, barWidth, barHeight)
     }
+    ctx.fill()
+    ctx.fillStyle = dark ? 'rgba(255,255,255,.42)' : 'rgba(255,255,255,.3)'
+    ctx.beginPath()
+    for (var cap = 0; cap < levels.length; cap++) if (levels[cap] > .04) ctx.rect(cap * (barWidth + gap), height - 3.5 - levels[cap] * (height - 6), barWidth, 1.5)
+    ctx.fill()
     canvas.dataset.energy = peak.toFixed(3)
+    canvas.dataset.level = visualPeak.toFixed(3)
     canvas.dataset.frames = String(Number(canvas.dataset.frames || 0) + 1)
   }
-  function stopSpectrum () { cancelAnimationFrame(spectrumFrame); spectrumFrame = 0; levels.fill(0); drawSpectrum(0, false) }
+  function stopSpectrum () { cancelAnimationFrame(spectrumFrame); spectrumFrame = 0; settleStarted = 0; lastFrame = 0; drawTime = 0; levels.fill(0); settleFrom.fill(0); drawSpectrum(0, false) }
+  function beginSettle (timestamp) {
+    if (settleStarted) return
+    settleStarted = timestamp
+    settleFrom.set(levels)
+    state('settling', '收拢频谱')
+  }
   function tick (timestamp) {
     spectrumFrame = 0
     if (!room || !visible || document.hidden || !enabled || motion.matches) return
     var p = player()
-    if (!p || p.audio.paused || p.audio.ended) return
-    if (timestamp - lastFrame >= 1000 / 24) { lastFrame = timestamp; drawSpectrum(timestamp, true) }
+    var live = p && !p.audio.paused && !p.audio.ended
+    // 实际鼠标点击时，rAF 可能早于 audio 的 pause 事件；这里也要接住暂停。
+    if (!live) beginSettle(timestamp)
+    if (!live && timestamp - settleStarted >= pauseDuration) { stopSpectrum(); state('idle', '等待播放'); return }
+    if (timestamp - lastFrame >= 1000 / (innerWidth <= 768 ? 30 : 60) - 1) { lastFrame = timestamp; drawSpectrum(timestamp, live) }
     spectrumFrame = requestAnimationFrame(tick)
+  }
+  function stopDisc () { cancelAnimationFrame(discFrame); discFrame = 0; discTime = 0; discSpeed = 0 }
+  function tickDisc (timestamp) {
+    discFrame = 0
+    if (!room || !room.isConnected || !visible || document.hidden || motion.matches) { stopDisc(); return }
+    var p = player(), live = p && !p.audio.paused && !p.audio.ended
+    if (!discTime || timestamp - discTime >= 1000 / 30) {
+      var dt = discTime ? Math.min(100, timestamp - discTime) : 33
+      discTime = timestamp
+      discSpeed += ((live ? 1 : 0) - discSpeed) * (1 - Math.exp(-dt / (live ? 170 : 145)))
+      discAngle = (discAngle + dt * 360 / 28000 * discSpeed) % 360
+      var disc = room.querySelector('.lks-room-disc')
+      disc.style.setProperty('--disc-angle', discAngle.toFixed(3) + 'deg')
+      disc.dataset.speed = discSpeed.toFixed(3)
+      if (!live && discSpeed < .008) { disc.dataset.speed = '0'; stopDisc(); return }
+    }
+    discFrame = requestAnimationFrame(tickDisc)
+  }
+  function syncDisc () {
+    if (!room || !room.isConnected || !visible || document.hidden || motion.matches) { stopDisc(); return }
+    var p = player()
+    if (!discFrame && (discSpeed > .008 || (p && !p.audio.paused && !p.audio.ended))) discFrame = requestAnimationFrame(tickDisc)
   }
   function syncSpectrum () {
     var p = player()
+    syncDisc()
     if (!room || !room.isConnected) { stopSpectrum(); return }
     if (!enabled) { stopSpectrum(); state('off', '频谱已关闭'); return }
     if (motion.matches) { stopSpectrum(); state('reduced', '静态聆听'); return }
     if (!visible || document.hidden) { stopSpectrum(); return }
-    if (!p || p.audio.paused || p.audio.ended) { stopSpectrum(); state('idle', '等待播放'); return }
+    if (!p || p.audio.paused || p.audio.ended) {
+      if (levels.some(function (value) { return value > .002 })) {
+        beginSettle(performance.now())
+        if (!spectrumFrame) spectrumFrame = requestAnimationFrame(tick)
+      } else { stopSpectrum(); state('idle', '等待播放') }
+      return
+    }
     if (!ensureAnalysis()) { stopSpectrum(); state('unavailable', '安心听歌'); return }
     state('live', '随音乐起伏')
+    settleStarted = 0
     if (!spectrumFrame) spectrumFrame = requestAnimationFrame(tick)
   }
   function bindAudio () {
@@ -204,7 +266,7 @@
     p.audio.addEventListener('emptied', function () { disconnectCapture(); captureFailed = false })
   }
   function init () {
-    stopSpectrum()
+    stopSpectrum(); stopDisc()
     if (observer) observer.disconnect()
     room = document.querySelector('.lks-music-room'); current = null; visible = true
     if (room) {
@@ -214,7 +276,9 @@
       toggle.addEventListener('click', function () { enabled = !enabled; toggle.setAttribute('aria-pressed', String(enabled)); toggle.setAttribute('aria-label', enabled ? '关闭音频可视化' : '打开音频可视化'); toggle.title = toggle.getAttribute('aria-label'); syncSpectrum() })
       if (window.IntersectionObserver) {
         observer = new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; syncSpectrum() })
-        observer.observe(room.querySelector('.lks-room-spectrum'))
+        // 手机点击底部播放键时会把频谱滚出视口，整张播放卡仍可见。
+        // 以播放卡判断可见性，避免按钮点击之前就清空余音、打断减速。
+        observer.observe(room.querySelector('.lks-room-player'))
       }
     }
     bindAudio(); updateCover(); syncSpectrum()
@@ -225,7 +289,7 @@
     if (['ready', 'listswitch'].includes(event.detail.event)) updateCover()
     if (event.detail.event !== 'timeupdate') syncSpectrum()
   })
-  document.addEventListener('pjax:send', function () { ++coverRun; stopSpectrum(); disconnectCapture(); if (audioContext) audioContext.suspend().catch(function () {}) })
+  document.addEventListener('pjax:send', function () { ++coverRun; stopSpectrum(); stopDisc(); disconnectCapture(); if (audioContext) audioContext.suspend().catch(function () {}) })
   document.addEventListener('pjax:complete', init)
   document.addEventListener('visibilitychange', syncSpectrum)
   motion.addEventListener('change', function () { document.querySelectorAll('.lks-cover-stage img').forEach(function (node) { node.getAnimations().forEach(function (animation) { animation.finish() }) }); syncSpectrum() })

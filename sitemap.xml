@@ -20,6 +20,15 @@
   </url>
   
   <url>
+    <loc>https://lksme.dpdns.org/js/vendor/carousel-touch-README.html</loc>
+    
+    <lastmod>2026-10-16</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://lksme.dpdns.org/img/manifest.json</loc>
     
     <lastmod>2026-10-16</lastmod>
@@ -30,6 +39,33 @@
   
   <url>
     <loc>https://lksme.dpdns.org/fonts/zhuzi/manifest.json</loc>
+    
+    <lastmod>2026-10-16</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://lksme.dpdns.org/css/vendor/fontawesome-6.7.2/README.html</loc>
+    
+    <lastmod>2026-10-16</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://lksme.dpdns.org/css/vendor/fontawesome-6.7.2/manifest.json</loc>
+    
+    <lastmod>2026-10-16</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://lksme.dpdns.org/css/vendor/clock-1.1.9/README.html</loc>
     
     <lastmod>2026-10-16</lastmod>
     
@@ -203,14 +239,14 @@
   </url>
   
   <url>
-    <loc>https://lksme.dpdns.org/tags/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/</loc>
+    <loc>https://lksme.dpdns.org/tags/VS-Code/</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://lksme.dpdns.org/tags/VS-Code/</loc>
+    <loc>https://lksme.dpdns.org/tags/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -268,14 +304,14 @@
   </url>
   
   <url>
-    <loc>https://lksme.dpdns.org/categories/%E7%AB%99%E7%82%B9/</loc>
+    <loc>https://lksme.dpdns.org/categories/%E6%95%99%E7%A8%8B/</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://lksme.dpdns.org/categories/%E6%95%99%E7%A8%8B/</loc>
+    <loc>https://lksme.dpdns.org/categories/%E7%AB%99%E7%82%B9/</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
