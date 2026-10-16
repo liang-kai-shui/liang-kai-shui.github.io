@@ -343,6 +343,25 @@
   }
 
   /* ---------------------- 持续播放的侧栏电台 ---------------------- */
+  function toggleMusicOrder () {
+    if (!musicPlayer) return
+    var random = musicPlayer.options.order !== 'random'
+    musicPlayer.options.order = random ? 'random' : 'list'
+    syncMusicOrder()
+    musicPlayer.notice(random ? '已开启随机播放' : '已恢复顺序播放')
+    document.dispatchEvent(new CustomEvent('lks:music', { detail: { event: 'orderchange' } }))
+  }
+  function syncMusicOrder () {
+    if (!musicPlayer) return
+    var random = musicPlayer.options.order === 'random'
+    document.querySelectorAll('[data-music-action="order"], [data-room-action="order"]').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(random))
+      button.setAttribute('aria-label', random ? '关闭随机播放' : '开启随机播放')
+      button.title = random ? '随机播放已开启，点击恢复顺序播放' : '开启随机播放'
+      button.classList.toggle('is-active', random)
+      button.firstChild.className = 'fas fa-random'
+    })
+  }
   function initMusicShell () {
     if (!parking) {
       parking = element('div')
@@ -492,7 +511,7 @@
         else location.assign('/music/')
       }, true)
       var controls = element('div', 'lks-music-controls')
-      var specs = [['prev', '上一首', 'fa-step-backward'], ['toggle', '播放', 'fa-play'], ['next', '下一首', 'fa-step-forward']]
+      var specs = [['order', '开启随机播放', 'fa-random'], ['prev', '上一首', 'fa-step-backward'], ['toggle', '播放', 'fa-play'], ['next', '下一首', 'fa-step-forward']]
       specs.forEach(function (spec) {
         var button = element('button')
         button.type = 'button'
@@ -504,6 +523,7 @@
           if (spec[0] === 'prev') musicPlayer.skipBack()
           else if (spec[0] === 'next') musicPlayer.skipForward()
           else if (spec[0] === 'toggle') musicPlayer.toggle()
+          else if (spec[0] === 'order') toggleMusicOrder()
         })
         controls.appendChild(button)
       })
@@ -575,7 +595,7 @@
       musicPlayer.on('timeupdate', syncProgress)
       musicPlayer.on('durationchange', syncProgress)
       ;['listshow', 'listhide'].forEach(function (name) { musicPlayer.on(name, function () { queueMicrotask(syncList) }) })
-      syncVolume(); syncProgress(); syncList()
+      syncVolume(); syncProgress(); syncList(); syncMusicOrder()
       var sync = function () {
         var button = controls.querySelector('[data-music-action="toggle"]')
         button.setAttribute('aria-label', musicPlayer.paused ? '播放' : '暂停')
@@ -712,5 +732,5 @@
   document.addEventListener('pjax:complete', init)
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)
   else init()
-  window.lksMusic = { get player () { return musicPlayer }, get songs () { return playlist || [] }, ensure: ensureMusic, open: function () { toggleMusic(true) } }
+  window.lksMusic = { get player () { return musicPlayer }, get songs () { return playlist || [] }, ensure: ensureMusic, toggleOrder: toggleMusicOrder, syncOrder: syncMusicOrder, open: function () { toggleMusic(true) } }
 })()

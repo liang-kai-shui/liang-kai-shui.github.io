@@ -295,12 +295,14 @@ html { scroll-padding-top: 86px; }
 .lks-music-wrapper .aplayer .aplayer-list ol li { border-color: var(--lks-line); }
 .lks-music-wrapper .aplayer .aplayer-list ol li:hover, .lks-music-wrapper .aplayer .aplayer-list ol li.aplayer-list-light { background: var(--lks-surface); }
 .lks-music-wrapper .aplayer .aplayer-list-index, .lks-music-wrapper .aplayer .aplayer-list-author { color: var(--lks-muted); }
-.lks-music-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin: 14px 0; }
-.lks-music-controls button { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: none; border-radius: 50%; background: transparent; color: var(--lks-muted); font-size: 16px; cursor: pointer; }
+.lks-music-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) 52px repeat(2, minmax(0, 1fr)); align-items: center; gap: 4px; margin: 14px 0; }
+.lks-music-controls button { display: grid; place-items: center; justify-self: center; width: 36px; height: 40px; padding: 0; border: none; border-radius: 50%; background: transparent; color: var(--lks-muted); font-size: 16px; cursor: pointer; }
 .lks-music-controls button[data-music-action='toggle'] { position: relative; width: 52px; height: 52px; background: linear-gradient(145deg, #318ece, #329fae); color: #fff; box-shadow: 0 5px 15px rgba(49,142,206,.18); }
 .lks-music-wrapper .aplayer-loading .lks-music-controls [data-music-action='toggle']::after { content: ''; position: absolute; inset: -5px; border: 2px solid transparent; border-top-color: var(--lks-accent); border-radius: 50%; animation: lks-radio-buffering .9s linear infinite; pointer-events: none; }
 @keyframes lks-radio-buffering { to { transform: rotate(360deg); } }
 .lks-music-controls button:hover { color: var(--lks-accent); }
+.lks-music-controls button[data-music-action='order'][aria-pressed='true'] { color: var(--lks-accent); background: var(--lks-soft); }
+.lks-music-controls button:focus-visible { outline: 2px solid var(--lks-accent); outline-offset: 3px; }
 .lks-music-controls button[data-music-action='toggle']:hover { color: #fff; background: #257db8; }
 .lks-music-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 10px; border-top: 1px solid var(--lks-line); }
 .lks-music-volume { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }

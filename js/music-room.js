@@ -325,6 +325,7 @@
   function update (event) {
     var p = player()
     if (!p) return
+    if (event && event.detail && ['ready', 'orderchange'].includes(event.detail.event)) window.lksMusic.syncOrder()
     var next = window.lksMusic.songs[p.list.index]
     if (next !== song) { song = next; loadLyrics() }
     var wasPlaying = playing
@@ -369,6 +370,7 @@
     room = document.querySelector('.lks-music-room')
     roomSong = null
     if (!room) { mountSubtitle(); return }
+    window.lksMusic.syncOrder()
     if (!room.lksReady) {
       room.lksReady = true
       var lyricView = room.querySelector('.lks-room-lyrics')
@@ -388,7 +390,7 @@
           else if (type === 'prev') p.skipBack()
           else if (type === 'next') p.skipForward()
           else if (type === 'mute') { p.audio.muted = !p.audio.muted; update() }
-          else if (type === 'order') { var random = p.options.order !== 'random'; p.options.order = random ? 'random' : 'list'; p.notice(random ? '随机播放' : '顺序播放'); action.title = random ? '随机播放' : '顺序播放'; action.setAttribute('aria-label', action.title); action.classList.toggle('is-active', random) }
+          else if (type === 'order') window.lksMusic.toggleOrder()
         }
         var songButton = event.target.closest('[data-song-index]')
         if (songButton) { p.list.switch(Number(songButton.dataset.songIndex)); p.play() }
