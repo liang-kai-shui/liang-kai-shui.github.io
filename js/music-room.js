@@ -212,6 +212,7 @@
       }).finally(function () { clearTimeout(timer); if (lyricRequest === controller) lyricRequest = null })
   }
 
+  var previewIndex = -1, previewFrame = 0
   function renderLyrics () {
     if (!room || !room.isConnected) return
     resumeLyrics()
@@ -219,22 +220,27 @@
     view.replaceChildren()
     if (!lines.length) { view.appendChild(el('p', 'lks-room-empty', lyricMessage)); return }
     var track = el('div', 'lks-lyric-track')
+    track.setAttribute('role', 'list')
     lines.forEach(function (line, index) {
-      var button = el('button', 'lks-lyric-line', line.text)
-      button.type = 'button'; button.dataset.lyricIndex = index
-      button.setAttribute('aria-label', time(line.at) + ' ' + line.text)
-      track.appendChild(button)
+      var row = el('div', 'lks-lyric-line'), copy = el('span', 'lks-lyric-copy', line.text)
+      row.dataset.lyricIndex = index; row.setAttribute('role', 'listitem')
+      var actions = el('span', 'lks-lyric-jump'), stamp = el('span', 'lks-lyric-stamp', time(line.at))
+      var seek = el('button', 'lks-lyric-seek')
+      actions.hidden = true; seek.type = 'button'; seek.dataset.lyricSeek = index
+      seek.setAttribute('aria-label', '从 ' + time(line.at) + ' 播放：' + line.text)
+      seek.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m9 5 11 7-11 7Z" fill="currentColor"/></svg>'
+      actions.append(stamp, seek); row.append(copy, actions); track.appendChild(row)
     })
     view.appendChild(track)
     positionLyrics()
   }
-  function positionLyrics () {
+  function positionLyrics (instant) {
     if (!room || !room.isConnected) return
     var view = room.querySelector('.lks-room-lyrics')
     var track = view.querySelector('.lks-lyric-track')
     if (!track) return
     var selected = Math.max(0, lyricIndex)
-    track.querySelectorAll('button').forEach(function (node, index) {
+    track.querySelectorAll('.lks-lyric-line').forEach(function (node, index) {
       node.classList.toggle('is-current', index === lyricIndex)
       node.dataset.distance = Math.min(3, Math.abs(index - selected))
       if (index === lyricIndex) node.setAttribute('aria-current', 'true'); else node.removeAttribute('aria-current')
@@ -250,26 +256,55 @@
       //       比视口高 → 仍然是当前句居中，只把位移夹在可视范围内，
       //                  开头别在上面留白、结尾别在下面留白。
       var shift = viewH / 2 - active.offsetTop - active.offsetHeight / 2
+      if (room.dataset.lyricLayout === 'animating' || browsingLyrics) return
       track.style.transform = trackH <= viewH ? 'translateY(' + (viewH - trackH) / 2 + 'px)' : ''
-      if (!browsingLyrics) view.scrollTo({ top: trackH <= viewH ? 0 : Math.max(0, -shift), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
+      if (!browsingLyrics) view.scrollTo({ top: trackH <= viewH ? 0 : Math.max(0, -shift), behavior: instant === true || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
     }
+  }
+  function selectPreview (index) {
+    if (!room || !room.isConnected || !lines[index]) return
+    previewIndex = index
+    room.querySelectorAll('.lks-lyric-line').forEach(function (row, i) {
+      row.classList.toggle('is-preview', i === index)
+      row.querySelector('.lks-lyric-jump').hidden = i !== index
+    })
+  }
+  function previewCenteredLine () {
+    previewFrame = 0
+    if (!room || !room.isConnected || !browsingLyrics) return
+    var view = room.querySelector('.lks-room-lyrics'), rect = view.getBoundingClientRect(), middle = rect.top + rect.height / 2
+    var nearest = -1, distance = Infinity
+    view.querySelectorAll('.lks-lyric-line').forEach(function (row, index) {
+      var r = row.getBoundingClientRect(), gap = Math.abs((r.top + r.bottom) / 2 - middle)
+      if (gap < distance) { nearest = index; distance = gap }
+    })
+    if (nearest !== previewIndex && nearest >= 0) selectPreview(nearest)
+  }
+  function schedulePreview () { if (!previewFrame) previewFrame = requestAnimationFrame(previewCenteredLine) }
+  function resetBrowseTimer () {
+    clearTimeout(lyricResumeTimer)
+    lyricResumeTimer = setTimeout(function () { resumeLyrics(); positionLyrics() }, 5000)
   }
   function resumeLyrics () {
-    clearTimeout(lyricResumeTimer)
+    clearTimeout(lyricResumeTimer); cancelAnimationFrame(previewFrame); previewFrame = 0; previewIndex = -1
     browsingLyrics = false
     if (room) {
+      var focusWasSeek = document.activeElement && document.activeElement.matches('[data-lyric-seek]')
       room.classList.remove('is-browsing-lyrics')
       room.querySelector('[data-room-action="follow"]').hidden = true
+      room.querySelectorAll('.is-preview').forEach(function (row) { row.classList.remove('is-preview') })
+      room.querySelectorAll('.lks-lyric-jump').forEach(function (actions) { actions.hidden = true })
+      if (focusWasSeek) room.querySelector('.lks-room-lyrics').focus({ preventScroll: true })
     }
   }
-  function browseLyrics () {
-    var view = room.querySelector('.lks-room-lyrics')
-    if (view.scrollHeight <= view.clientHeight + 1) return
+  function browseLyrics (event, index) {
+    if (!room || !lines.length || (event && event.target.closest('[data-lyric-seek]'))) return
     browsingLyrics = true
     room.classList.add('is-browsing-lyrics')
     room.querySelector('[data-room-action="follow"]').hidden = false
-    clearTimeout(lyricResumeTimer)
-    lyricResumeTimer = setTimeout(function () { resumeLyrics(); positionLyrics() }, 5000)
+    resetBrowseTimer()
+    if (typeof index === 'number') { cancelAnimationFrame(previewFrame); previewFrame = 0; selectPreview(index) }
+    else schedulePreview()
   }
   function renderQueue () {
     if (!room || !room.isConnected) return
@@ -376,7 +411,7 @@
     positionLyrics()
   }
   function initRoom () {
-    clearTimeout(lyricResumeTimer)
+    clearTimeout(lyricResumeTimer); cancelAnimationFrame(previewFrame); previewFrame = 0; previewIndex = -1
     browsingLyrics = false
     room = document.querySelector('.lks-music-room')
     roomSong = null
@@ -388,7 +423,8 @@
       lyricView.addEventListener('wheel', browseLyrics, { passive: true })
       lyricView.addEventListener('touchmove', browseLyrics, { passive: true })
       lyricView.addEventListener('pointerdown', browseLyrics)
-      lyricView.addEventListener('keydown', function (event) { if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) browseLyrics() })
+      lyricView.addEventListener('scroll', function () { if (browsingLyrics) { schedulePreview(); resetBrowseTimer() } }, { passive: true })
+      lyricView.addEventListener('keydown', function (event) { if (event.key === 'Escape' && browsingLyrics) { event.preventDefault(); resumeLyrics(); positionLyrics() } else if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) browseLyrics(event) })
       room.addEventListener('click', function (event) {
         var p = player(), tab = event.target.closest('[role="tab"]')
         if (tab) selectTab(tab.id, false)
@@ -405,8 +441,11 @@
         }
         var songButton = event.target.closest('[data-song-index]')
         if (songButton) { p.list.switch(Number(songButton.dataset.songIndex)); p.play() }
-        var lyric = event.target.closest('[data-lyric-index]')
-        if (lyric) { resumeLyrics(); p.seek(lines[Number(lyric.dataset.lyricIndex)].at); update(); positionLyrics() }
+        var seek = event.target.closest('[data-lyric-seek]'), lyric = event.target.closest('[data-lyric-index]')
+        if (seek) {
+          var line = lines[Number(seek.dataset.lyricSeek)]
+          if (line) { resumeLyrics(); p.seek(line.at); p.play(); update(); positionLyrics() }
+        } else if (lyric) { browseLyrics(null, Number(lyric.dataset.lyricIndex)); lyricView.focus({ preventScroll: true }) }
       })
       room.addEventListener('input', function (event) {
         var p = player(), target = event.target
@@ -440,7 +479,7 @@
     retry.addEventListener('click', function () { status.textContent = '正在重新连接…'; window.lksMusic.ensure() })
     status.appendChild(retry)
   })
-  document.addEventListener('lks:music-layout', function () { positionLyrics(); schedule() })
+  document.addEventListener('lks:music-layout', function (event) { positionLyrics(event.detail && event.detail.instant); schedule() })
   document.addEventListener('pjax:complete', initRoom)
   document.addEventListener('pjax:send', cancelTyping)
   typingMotion.addEventListener('change', function () { if (subtitle && subtitle.dataset.mode === 'quote') { delete subtitle.dataset.text; showSubtitle() } })
