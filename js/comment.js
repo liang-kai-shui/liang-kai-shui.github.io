@@ -159,7 +159,7 @@
       el('span', 'lks-form-eyebrow', isGuestbook ? 'NEW NOTE' : 'NEW COMMENT'),
       el('h3', 'lks-form-title', isGuestbook ? '在这里留个言' : isMusic ? '一起聊聊音乐' : '聊聊这篇文章'),
       el('p', 'lks-form-desc', isGuestbook ? '想聊什么都行，写完直接发在下面。' : isMusic ? '推荐一首好歌，或说说它让你想起了什么。' : '有想法或发现哪里不对，欢迎在这里说。'),
-      el('p', 'lks-form-hint', '邮箱不会公开，也不需要注册。')
+      el('p', 'lks-form-hint', '邮箱只在后台可见，不会公开。')
     )
 
     var row = el('div', 'lks-row')
@@ -558,7 +558,7 @@
     if (root.getAttribute('data-path') === path) return   // pjax 后同页不重复初始化
     root.setAttribute('data-path', path)
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css?v=20261017-comments')
+    loadCSS('/css/comment.css?v=20261017-comments-2')
     render(root)
     updateHeadline()
     load(root, false)
