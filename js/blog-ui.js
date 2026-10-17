@@ -64,7 +64,7 @@
       var item = element('span', 'article-meta')
       var glyph = element('i', icon); glyph.setAttribute('aria-hidden', 'true'); item.appendChild(glyph)
       var label = element(href ? 'a' : 'span', '', text)
-      if (href) label.href = href
+      if (href) { label.href = href; label.setAttribute('aria-label', (href.indexOf('/categories/') === 0 ? '分类：' : '标签：') + text) }
       item.appendChild(label); meta.appendChild(item)
     }
     function slug (name) { return name === 'C++' ? 'C' : name.replace(/\s+/g, '-') }
