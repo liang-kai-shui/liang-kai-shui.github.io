@@ -379,6 +379,13 @@
 .lks-msg-ok { color: #238b58; }
 .lks-msg-err { color: #c83d51; }
 
+.lks-submit-hint {
+  flex: none;
+  color: var(--lks-comment-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .lks-submit,
 .lks-more {
   font: inherit;
@@ -534,6 +541,13 @@
 .lks-item + .lks-item { border-top: 1px solid var(--lks-comment-line); }
 
 .lks-item:first-child { border-top: 0; }
+
+.lks-item.is-target {
+  border-radius: 10px;
+  background: rgba(73, 177, 245, .1);
+  box-shadow: 0 0 0 4px rgba(73, 177, 245, .08);
+  transition: background .25s ease, box-shadow .25s ease;
+}
 
 .lks-item-reply {
   margin: 0 -18px;
@@ -735,6 +749,7 @@ body[data-page-type='music'] .lks-list-head { margin-top: 18px; }
   .lks-extra-row { grid-template-columns: 1fr; }
   .lks-actions { flex-wrap: wrap; }
   .lks-msg { width: 100%; order: 2; }
+  .lks-submit-hint { display: none; }
   .lks-submit { width: 100%; order: 1; }
   .lks-list-head { margin-top: 22px; }
   .lks-list-order { display: none; }

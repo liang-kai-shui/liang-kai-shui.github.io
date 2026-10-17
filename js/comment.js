@@ -208,7 +208,8 @@
     msg.setAttribute('aria-live', 'polite')
     var submit = el('button', 'lks-submit', isGuestbook ? '发布留言' : '发表评论')
     submit.type = 'submit'
-    actions.append(msg, submit)
+    var shortcut = el('span', 'lks-submit-hint', 'Ctrl / ⌘ + Enter 发送')
+    actions.append(msg, shortcut, submit)
 
     var tools = el('div', 'lks-form-tools')
     var counter = el('span', 'lks-counter', '0 / 2000')
@@ -326,6 +327,7 @@
 
   function buildItem (root, c, isReply) {
     var item = el('div', 'lks-item' + (isReply ? ' lks-item-reply' : ''))
+    item.id = 'comment-' + c.id
     item.setAttribute('data-id', String(c.id))
 
     var ava = el('div', 'lks-avatar', (c.nick || '?').trim().charAt(0).toUpperCase())
@@ -352,6 +354,21 @@
     reply.type = 'button'
     reply.addEventListener('click', function () { startReply(root, c) })
     ops.appendChild(reply)
+
+    var copyLink = el('button', 'lks-op', '复制链接')
+    copyLink.type = 'button'
+    copyLink.addEventListener('click', function () {
+      var url = location.origin + location.pathname + '#comment-' + c.id
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function () {
+          if (window.btf && window.btf.snackbarShow) window.btf.snackbarShow('评论链接已复制')
+          else setMsg('评论链接已复制', 'ok')
+        }).catch(function () { setMsg(url, 'ok') })
+      } else {
+        setMsg(url, 'ok')
+      }
+    })
+    ops.appendChild(copyLink)
 
     if (getToken()) {
       var del = el('button', 'lks-op lks-op-danger', '删除')
@@ -411,6 +428,18 @@
         thread.appendChild(buildItem(root, c, !!group.root))
       })
       box.appendChild(thread)
+    })
+  }
+
+  function highlightTarget () {
+    var match = /^#comment-(\d+)$/.exec(location.hash)
+    if (!match) return
+    var node = document.getElementById('comment-' + match[1])
+    if (!node) return
+    requestAnimationFrame(function () {
+      node.scrollIntoView({block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'})
+      node.classList.add('is-target')
+      setTimeout(function () { node.classList.remove('is-target') }, 2600)
     })
   }
 
@@ -528,6 +557,7 @@
         state.total = data.total
         state.comments = append ? state.comments.concat(data.comments) : data.comments
         renderList()
+        highlightTarget()
         state.moreBtn.style.display = data.hasMore ? '' : 'none'
         state.listStatusTextEl.textContent = ''
         updateHeadline()
@@ -558,7 +588,7 @@
     if (root.getAttribute('data-path') === path) return   // pjax 后同页不重复初始化
     root.setAttribute('data-path', path)
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css?v=20261017-comments-2')
+    loadCSS('/css/comment.css?v=20261017-comments-3')
     render(root)
     updateHeadline()
     load(root, false)
