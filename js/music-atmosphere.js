@@ -9,7 +9,37 @@
   var settleFrom = new Float32Array(64), drawTime = 0, pauseDuration = 240
   var discFrame = 0, discTime = 0, discAngle = 0, discSpeed = 0
   var visible = true, enabled = true, observer = null, spectrumState = ''
-  var captureAudio = null, captureFailed = false
+  var captureAudio = null, captureFailed = false, visualMode = 'mini', lastVisualMode = 'mini'
+  try {var storedMode = localStorage.getItem('lks-music-visualizer'); if (['mini', 'stage', 'off'].includes(storedMode)) visualMode = storedMode} catch (_) {}
+  enabled = visualMode !== 'off'
+  if (enabled) lastVisualMode = visualMode
+  function syncVisualControls () {
+    if (!room) return
+    room.dataset.spectrumMode = visualMode
+    room.querySelectorAll('[name="music-spectrum-mode"]').forEach(function (input) { input.checked = input.value === visualMode })
+    var toggle = room.querySelector('.lks-spectrum-toggle')
+    toggle.setAttribute('aria-pressed', String(enabled))
+    toggle.setAttribute('aria-label', enabled ? '关闭音频可视化' : '打开音频可视化')
+    toggle.title = toggle.getAttribute('aria-label')
+    var label = room.querySelector('.lks-spectrum-mode-label')
+    if (label) label.textContent = visualMode === 'stage' ? '整卡背景频谱' : enabled ? '频谱' : '可视化已关闭'
+  }
+  function observeVisual () {
+    if (observer) observer.disconnect()
+    visible = true
+    if (room && window.IntersectionObserver) {
+      observer = new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; syncSpectrum() })
+      observer.observe(room.querySelector(visualMode === 'stage' ? '.workspace-stage' : '.lks-room-player'))
+    }
+  }
+  function setVisualMode (value) {
+    if (!['mini', 'stage', 'off'].includes(value)) return
+    stopSpectrum()
+    visualMode = value; enabled = value !== 'off'
+    if (enabled) lastVisualMode = value
+    try {localStorage.setItem('lks-music-visualizer', value)} catch (_) {}
+    syncVisualControls(); observeVisual(); syncSpectrum()
+  }
 
   function player () { return window.lksMusic && window.lksMusic.player }
   function clamp (n, a, b) { return Math.max(a, Math.min(b, n)) }
@@ -114,6 +144,9 @@
     if (!room) return
     var view = room.querySelector('.lks-room-spectrum')
     if (spectrumState !== value || view.dataset.state !== value) { spectrumState = value; view.dataset.state = value; view.querySelector('.lks-spectrum-state').textContent = text }
+    room.dataset.spectrumState = value
+    var description = room.querySelector('[data-spectrum-description]')
+    if (description && description.textContent !== text) description.textContent = text
   }
   function disconnectCapture () {
     if (source) source.disconnect()
@@ -151,9 +184,10 @@
   }
   function drawSpectrum (timestamp, live) {
     if (!room) return
-    var canvas = room.querySelector('.lks-room-spectrum canvas'), ctx = canvas.getContext('2d')
+    var full = visualMode === 'stage' && !!room.querySelector('.workspace-spectrum-canvas')
+    var canvas = room.querySelector(full ? '.workspace-spectrum-canvas' : '.lks-room-spectrum canvas'), ctx = canvas.getContext('2d')
     if (!ctx) return
-    var width = canvas.clientWidth, height = canvas.clientHeight, ratio = Math.min(devicePixelRatio || 1, 2)
+    var width = canvas.clientWidth, height = canvas.clientHeight, ratio = Math.min(devicePixelRatio || 1, full ? 1.25 : 2)
     if (!width || !height) return
     if (canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)) { canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio) }
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0); ctx.clearRect(0, 0, width, height)
@@ -167,7 +201,7 @@
     ctx.strokeStyle = dark ? 'rgba(255,255,255,.045)' : 'rgba(30,50,70,.055)'
     ctx.lineWidth = 1; ctx.beginPath()
     for (var row = 1; row <= 3; row++) { var y = Math.round((height - 4) * row / 4) + .5; ctx.moveTo(0, y); ctx.lineTo(width, y) }
-    ctx.stroke()
+    if (!full) ctx.stroke()
     ctx.fillStyle = gradient
     var gap = width < 240 ? 1 : 1.5, barWidth = (width - gap * (levels.length - 1)) / levels.length, peak = 0, visualPeak = 0
     var dt = drawTime ? clamp(timestamp - drawTime, 8, 80) : 16
@@ -187,14 +221,20 @@
       if (levels[i] < .002) levels[i] = 0
       peak = Math.max(peak, value)
       visualPeak = Math.max(visualPeak, levels[i])
-      var barHeight = 1.5 + levels[i] * (height - 6)
+      var barHeight = (full ? 0 : 1.5) + levels[i] * (full ? height * .72 : height - 6)
       ctx.rect(i * (barWidth + gap), height - 2 - barHeight, barWidth, barHeight)
     }
     ctx.fill()
     ctx.fillStyle = dark ? 'rgba(255,255,255,.42)' : 'rgba(255,255,255,.3)'
     ctx.beginPath()
-    for (var cap = 0; cap < levels.length; cap++) if (levels[cap] > .04) ctx.rect(cap * (barWidth + gap), height - 3.5 - levels[cap] * (height - 6), barWidth, 1.5)
+    for (var cap = 0; !full && cap < levels.length; cap++) if (levels[cap] > .04) ctx.rect(cap * (barWidth + gap), height - 3.5 - levels[cap] * (height - 6), barWidth, 1.5)
     ctx.fill()
+    if (full && visualPeak > .01) {
+      ctx.globalCompositeOperation = 'destination-over'
+      var glow = ctx.createRadialGradient(width * .38, height, 0, width * .38, height, Math.max(width * .65, height))
+      glow.addColorStop(0, 'hsla(' + palette.h + ', 70%, 55%, ' + (visualPeak * .3) + ')'); glow.addColorStop(1, 'transparent')
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height); ctx.globalCompositeOperation = 'source-over'
+    }
     canvas.dataset.energy = peak.toFixed(3)
     canvas.dataset.level = visualPeak.toFixed(3)
     canvas.dataset.frames = String(Number(canvas.dataset.frames || 0) + 1)
@@ -214,13 +254,13 @@
     // 实际鼠标点击时，rAF 可能早于 audio 的 pause 事件；这里也要接住暂停。
     if (!live) beginSettle(timestamp)
     if (!live && timestamp - settleStarted >= pauseDuration) { stopSpectrum(); state('idle', '等待播放'); return }
-    if (timestamp - lastFrame >= 1000 / (innerWidth <= 768 ? 30 : 60) - 1) { lastFrame = timestamp; drawSpectrum(timestamp, live) }
+    if (timestamp - lastFrame >= 1000 / (innerWidth <= 768 || visualMode === 'stage' ? 30 : 60) - 1) { lastFrame = timestamp; drawSpectrum(timestamp, live) }
     spectrumFrame = requestAnimationFrame(tick)
   }
   function stopDisc () { cancelAnimationFrame(discFrame); discFrame = 0; discTime = 0; discSpeed = 0 }
   function tickDisc (timestamp) {
     discFrame = 0
-    if (!room || !room.isConnected || !visible || document.hidden || motion.matches) { stopDisc(); return }
+    if (!room || !room.isConnected || !visible || !room.querySelector('.lks-room-disc').getClientRects().length || document.hidden || motion.matches) { stopDisc(); return }
     var p = player(), live = p && !p.audio.paused && !p.audio.ended
     if (!discTime || timestamp - discTime >= 1000 / 30) {
       var dt = discTime ? Math.min(100, timestamp - discTime) : 33
@@ -235,7 +275,7 @@
     discFrame = requestAnimationFrame(tickDisc)
   }
   function syncDisc () {
-    if (!room || !room.isConnected || !visible || document.hidden || motion.matches) { stopDisc(); return }
+    if (!room || !room.isConnected || !visible || !room.querySelector('.lks-room-disc').getClientRects().length || document.hidden || motion.matches) { stopDisc(); return }
     var p = player()
     if (!discFrame && (discSpeed > .008 || (p && !p.audio.paused && !p.audio.ended))) discFrame = requestAnimationFrame(tickDisc)
   }
@@ -271,18 +311,17 @@
     room = document.querySelector('.lks-music-room'); current = null; visible = true
     if (room) {
       applyPalette()
-      var toggle = room.querySelector('.lks-spectrum-toggle')
-      toggle.setAttribute('aria-pressed', String(enabled))
-      toggle.addEventListener('click', function () { enabled = !enabled; toggle.setAttribute('aria-pressed', String(enabled)); toggle.setAttribute('aria-label', enabled ? '关闭音频可视化' : '打开音频可视化'); toggle.title = toggle.getAttribute('aria-label'); syncSpectrum() })
-      if (window.IntersectionObserver) {
-        observer = new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; syncSpectrum() })
-        // 手机点击底部播放键时会把频谱滚出视口，整张播放卡仍可见。
-        // 以播放卡判断可见性，避免按钮点击之前就清空余音、打断减速。
-        observer.observe(room.querySelector('.lks-room-player'))
-      }
+      syncVisualControls(); observeVisual()
     }
     bindAudio(); updateCover(); syncSpectrum()
   }
+  // Delegation binds each control once, including after the initial PJAX lifecycle.
+  document.addEventListener('click', function (event) {
+    if (event.target.closest('.lks-spectrum-toggle') && room && room.isConnected) setVisualMode(enabled ? 'off' : lastVisualMode)
+  })
+  document.addEventListener('change', function (event) {
+    if (event.target.matches('[name="music-spectrum-mode"]') && room && room.isConnected) setVisualMode(event.target.value)
+  })
   document.addEventListener('lks:music', function (event) {
     bindAudio()
     if (event.detail.event === 'analysis-unavailable') { disconnectCapture(); captureFailed = true }

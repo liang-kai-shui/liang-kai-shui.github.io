@@ -279,7 +279,11 @@
     songs.forEach(function (item, index) {
       var button = el('button', 'lks-room-song')
       button.type = 'button'; button.dataset.songIndex = index
-      var number = el('span', 'lks-room-song-number', String(index + 1).padStart(2, '0'))
+      var number = el('span', 'lks-room-song-number')
+      number.appendChild(el('span', 'lks-room-song-index', String(index + 1).padStart(2, '0')))
+      var meter = el('span', 'lks-room-song-meter'); meter.setAttribute('aria-hidden', 'true')
+      for (var bar = 0; bar < 3; bar++) meter.appendChild(el('i'))
+      number.appendChild(meter)
       var artwork = el('span', 'lks-room-song-artwork')
       artwork.setAttribute('aria-hidden', 'true')
       artwork.appendChild(el('i', 'fas fa-music'))
@@ -291,7 +295,11 @@
         artwork.appendChild(image)
       }
       var details = el('span', 'lks-room-song-details')
-      details.append(el('strong', '', item.name), el('small', '', item.artist))
+      var titleRow = el('span', 'lks-room-song-title-row'), badge = el('span', 'lks-room-song-state', '播放中')
+      badge.setAttribute('aria-hidden', 'true')
+      titleRow.append(el('strong', '', item.name), badge)
+      details.append(titleRow, el('small', '', item.artist))
+      button.title = item.name + (item.artist ? ' · ' + item.artist : '')
       button.append(number, artwork, details, el('i', 'fas fa-play'))
       list.appendChild(button)
     })
@@ -306,6 +314,8 @@
       room.querySelectorAll('[data-song-index]').forEach(function (node) { var active = Number(node.dataset.songIndex) === p.list.index; node.classList.toggle('is-current', active); if (active) node.setAttribute('aria-current', 'true'); else node.removeAttribute('aria-current') })
     }
     room.classList.toggle('is-playing', playing)
+    var badge = room.querySelector('.lks-room-song.is-current .lks-room-song-state'), badgeText = playing ? '播放中' : '已暂停'
+    if (badge && badge.textContent !== badgeText) badge.textContent = badgeText
     var toggle = room.querySelector('[data-room-action="toggle"]')
     toggle.setAttribute('aria-label', playing ? '暂停' : '播放')
     toggle.firstChild.className = 'fas ' + (playing ? 'fa-pause' : 'fa-play')
