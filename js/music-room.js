@@ -430,6 +430,7 @@
     retry.addEventListener('click', function () { status.textContent = '正在重新连接…'; window.lksMusic.ensure() })
     status.appendChild(retry)
   })
+  document.addEventListener('lks:music-layout', function () { positionLyrics(); schedule() })
   document.addEventListener('pjax:complete', initRoom)
   document.addEventListener('pjax:send', cancelTyping)
   typingMotion.addEventListener('change', function () { if (subtitle && subtitle.dataset.mode === 'quote') { delete subtitle.dataset.text; showSubtitle() } })
