@@ -53,6 +53,7 @@
 
   var VIDEO_ID = 'lks-bg-video'
   var currentUrl = null
+  var currentDisplayUrl = null
   var currentSource = null
   var currentKind = null          // 'image' | 'video' | 'pool'
   var pending = null
@@ -155,6 +156,7 @@
     var bg = document.getElementById('web_bg')
     if (!bg) return false
     bg.style.backgroundImage = 'url("' + url + '")'
+    var early = document.getElementById('lks-initial-bg-style'); if (early) early.remove()
     var video = document.getElementById(VIDEO_ID)
     discardVideo(video)
     return true
@@ -171,7 +173,8 @@
     return true
   }
 
-  function remember (url, source, kind) {
+  function remember (url, source, kind, display) {
+    currentDisplayUrl = display || url
     currentUrl = url
     currentSource = source
     currentKind = kind
@@ -181,6 +184,7 @@
   function preloadImage (url, job) {
     return new Promise(function (resolve) {
       var img = new Image()
+      img.decoding = 'async'
       var done = false
       var timer
       var finish = function (ok) {
@@ -199,12 +203,12 @@
     })
   }
 
-  function applyImage (url, source, job) {
+  function applyImage (url, source, job, original) {
     return preloadImage(url, job).then(function (ok) {
       if (!ok || !alive(job)) return false
       var didBg = applyBackground(url)
       applyHeader(url)
-      if (didBg) remember(url, source, 'image')
+      if (didBg) remember(original || url, source, 'image', url)
       return didBg
     })
   }
@@ -370,6 +374,14 @@
   }
 
   function init () {
+    var initial = window.__lksInitialBackground
+    if (initial && !currentUrl) {
+      var job = { cancelled: false, cancel: [] }; pending = job; loading = true
+      return applyImage(initial.display, { name: 'pool', label: '收藏图池' }, job, initial.original).then(function (ok) {
+        if (ok) { message = '已换好 · 收藏图池'; announce() }
+        return ok
+      }).finally(function () { if (pending === job) { pending = null; loading = false; announce() } })
+    }
     var override = urlOverride()
     if (override === 'off' || override === 'none' || override === 'false') return Promise.resolve(false)
     return change(override && TYPES.some(function (item) { return item.id === override }) ? override : selectedType, false)
@@ -385,8 +397,8 @@
       }
       applyHeader(currentUrl, 'video')
     } else {
-      applyBackground(currentUrl)
-      applyHeader(currentUrl)
+      applyBackground(currentDisplayUrl || currentUrl)
+      applyHeader(currentDisplayUrl || currentUrl)
     }
   }
 
