@@ -114,7 +114,8 @@
     var listHead = el('div', 'lks-list-head')
     var listTitle = el('h3', 'lks-list-title', state.path === '/comments/' ? '大家说了什么' : state.path === '/music/' ? '听友留言' : '评论区')
     var listCount = el('span', 'lks-list-count', '0 条')
-    listHead.append(listTitle, listCount)
+    var listOrder = el('span', 'lks-list-order', '最新在前')
+    listHead.append(listTitle, listCount, listOrder)
     root.appendChild(listHead)
     var listStatus = el('div', 'lks-list-status')
     listStatus.setAttribute('role', 'status')
@@ -155,8 +156,10 @@
     var isMusic = state.path === '/music/'
     var intro = el('div', 'lks-form-intro')
     intro.append(
+      el('span', 'lks-form-eyebrow', isGuestbook ? 'NEW NOTE' : 'NEW COMMENT'),
       el('h3', 'lks-form-title', isGuestbook ? '在这里留个言' : isMusic ? '一起聊聊音乐' : '聊聊这篇文章'),
-      el('p', 'lks-form-desc', isGuestbook ? '想聊什么都行，写完直接发在下面。' : isMusic ? '推荐一首好歌，或说说它让你想起了什么。' : '有想法或发现哪里不对，欢迎在这里说。')
+      el('p', 'lks-form-desc', isGuestbook ? '想聊什么都行，写完直接发在下面。' : isMusic ? '推荐一首好歌，或说说它让你想起了什么。' : '有想法或发现哪里不对，欢迎在这里说。'),
+      el('p', 'lks-form-hint', '邮箱不会公开，也不需要注册。')
     )
 
     var row = el('div', 'lks-row')
@@ -334,11 +337,12 @@
     var name = c.link ? el('a', 'lks-nick', c.nick) : el('span', 'lks-nick', c.nick)
     if (c.link) { name.href = c.link; name.target = '_blank'; name.rel = 'noopener nofollow' }
     var time = el('span', 'lks-time', relativeTime(c.created_at))
+    head.appendChild(name)
     if (c.pid) {
       var target = findComment(c.pid)
       head.appendChild(el('span', 'lks-at', '回复 ' + (target ? '@' + target.nick : '某条评论')))
     }
-    head.append(name, time)
+    head.appendChild(time)
 
     var body = el('div', 'lks-content')
     body.textContent = c.content
@@ -373,7 +377,19 @@
     var root = document.getElementById(CONTAINER_ID)
     box.innerHTML = ''
     if (!state.comments.length) {
-      box.appendChild(el('div', 'lks-empty', state.path === '/comments/' ? '还没有留言，来做第一个吧。' : '还没有评论，聊聊你的看法吧。'))
+      var empty = el('div', 'lks-empty')
+      var emptyIcon = el('span', 'lks-empty-icon')
+      emptyIcon.innerHTML = '<i class="fas fa-comments" aria-hidden="true"></i>'
+      var emptyTitle = el('p', 'lks-empty-title', state.path === '/comments/' ? '还没有留言，来做第一个吧。' : '还没有评论，来聊第一句。')
+      var emptyText = el('p', 'lks-empty-text', state.path === '/comments/' ? '不用登录，留个昵称就能说。' : '说说你的想法，或者指出哪里不对。')
+      var emptyCta = el('button', 'lks-empty-cta', '写第一条')
+      emptyCta.type = 'button'
+      emptyCta.addEventListener('click', function () {
+        var ta = root.querySelector('.lks-textarea')
+        if (ta) ta.focus()
+      })
+      empty.append(emptyIcon, emptyTitle, emptyText, emptyCta)
+      box.appendChild(empty)
       return
     }
     // API 按新到旧返回；把同一串对话放在一起，根评论在前，回复接在下面。
@@ -503,6 +519,7 @@
     if (state.loading) return
     state.loading = true
     state.retryBtn.hidden = true
+    state.listStatusEl.classList.add('is-loading')
     state.listStatusTextEl.textContent = append ? '' : (state.path === '/comments/' ? '正在加载留言…' : '正在加载评论…')
     state.moreBtn.disabled = true
     state.moreBtn.textContent = '加载中…'
@@ -522,6 +539,7 @@
       })
       .then(function () {
         state.loading = false
+        state.listStatusEl.classList.remove('is-loading')
         state.moreBtn.disabled = false
         state.moreBtn.textContent = '加载更多'
       })
@@ -540,7 +558,7 @@
     if (root.getAttribute('data-path') === path) return   // pjax 后同页不重复初始化
     root.setAttribute('data-path', path)
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css')
+    loadCSS('/css/comment.css?v=20261017-comments')
     render(root)
     updateHeadline()
     load(root, false)
