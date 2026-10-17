@@ -356,6 +356,7 @@
     if (!playing) refreshQuote()
   }
   function selectTab (id, focus) {
+    if (window.lksMusicWorkspace) { window.lksMusicWorkspace.select(id, focus); positionLyrics(); return }
     room.querySelectorAll('[role="tab"]').forEach(function (tab) {
       var active = tab.id === id
       tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1
@@ -408,7 +409,11 @@
       })
       room.addEventListener('keydown', function (event) {
         var tab = event.target.closest('[role="tab"]')
-        if (tab && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); selectTab(event.key === 'Home' ? 'lks-room-lyrics-tab' : event.key === 'End' ? 'lks-room-queue-tab' : tab.id === 'lks-room-lyrics-tab' ? 'lks-room-queue-tab' : 'lks-room-lyrics-tab', true) }
+        if (tab && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+          event.preventDefault()
+          var tabs = Array.from(room.querySelectorAll('[role="tab"]')).filter(function (node) { return !node.hidden }), index = tabs.indexOf(tab)
+          selectTab((event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[tabs.length - 1] : tabs[(index + (event.key === 'ArrowLeft' ? -1 : 1) + tabs.length) % tabs.length]).id, true)
+        }
       })
     }
     renderQueue(); renderLyrics(); update(); mountSubtitle()
