@@ -19,26 +19,6 @@
   to { opacity: 1; transform: none; }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  #recent-posts .recent-post-item.lks-tilt {
-    transform: perspective(900px) rotateX(var(--lks-rx, 0deg)) rotateY(var(--lks-ry, 0deg)) translateY(-5px);
-    transition: transform 180ms ease-out, box-shadow 180ms ease-out;
-  }
-
-  #recent-posts .recent-post-item::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    opacity: 0;
-    background: radial-gradient(circle at var(--lks-mx, 50%) var(--lks-my, 50%), rgba(111, 207, 255, .18), transparent 48%);
-    transition: opacity 180ms ease-out;
-  }
-
-  #recent-posts .recent-post-item.lks-tilt::after { opacity: 1; }
-}
-
 /* 新配色从被按下的按钮处展开。没有 View Transition 的浏览器照常切换。 */
 html.lks-theme-switching::view-transition-old(root) { animation: none; }
 html.lks-theme-switching::view-transition-new(root) { animation: lks-theme-reveal 520ms ease-out both; }

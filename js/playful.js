@@ -4,34 +4,11 @@
 
   var headingObserver = null
   var themeReplay = false
-  var cardMedia = window.matchMedia('(hover: hover) and (pointer: fine)')
   var motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
 
   function reducedMotion () { return motionMedia.matches }
 
-  // 首页卡片跟着鼠标轻轻偏转，离开后立刻回正。
-  document.addEventListener('pointermove', function (event) {
-    if (!cardMedia.matches || reducedMotion()) return
-    var card = event.target.closest && event.target.closest('#recent-posts .recent-post-item')
-    if (!card) return
-    var rect = card.getBoundingClientRect()
-    var x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
-    var y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
-    card.style.setProperty('--lks-rx', ((0.5 - y) * 5).toFixed(2) + 'deg')
-    card.style.setProperty('--lks-ry', ((x - 0.5) * 5).toFixed(2) + 'deg')
-    card.style.setProperty('--lks-mx', (x * 100).toFixed(0) + '%')
-    card.style.setProperty('--lks-my', (y * 100).toFixed(0) + '%')
-    card.classList.add('lks-tilt')
-  }, { passive: true })
-
-  document.addEventListener('pointerout', function (event) {
-    var card = event.target.closest && event.target.closest('#recent-posts .recent-post-item.lks-tilt')
-    if (card && (!event.relatedTarget || !card.contains(event.relatedTarget))) {
-      card.classList.remove('lks-tilt')
-      card.style.removeProperty('--lks-rx')
-      card.style.removeProperty('--lks-ry')
-    }
-  }, { passive: true })
+  // Homepage hover is owned by reading.css; no per-pointer card transforms.
 
   // 用主题原本的按钮切换，保留它的记忆、提示和其他主题回调。
   document.addEventListener('click', function (event) {
