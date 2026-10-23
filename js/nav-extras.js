@@ -57,6 +57,7 @@
   var postsCache = null
 
   function randomPost () {
+    if (window.lksNavigation) return window.lksNavigation.random()
     var go = function (list) {
       if (!list || !list.length) return
       var here = window.location.pathname

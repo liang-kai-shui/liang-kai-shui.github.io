@@ -115,7 +115,7 @@
     if (category) url.searchParams.set('category', category)
     else url.searchParams.delete('category')
     history.pushState({}, '', url.pathname + url.search + url.hash)
-    data().then(filterHome).catch(function () { location.href = category ? '/categories/' : '/' })
+    data().then(filterHome).catch(function () { if (window.pjax) window.pjax.loadUrl(category ? '/categories/' : '/'); else location.href = category ? '/categories/' : '/' })
   }
 
   document.addEventListener('click', function (event) {

@@ -119,13 +119,14 @@
     link.textContent = '带我随机逛一篇 →'
     link.addEventListener('click', function (event) {
       event.preventDefault()
+      if (window.lksNavigation) { window.lksNavigation.random(); return }
       fetch('/posts-index.json').then(function (response) {
         if (!response.ok) throw new Error('文章列表不可用')
         return response.json()
       }).then(function (posts) {
         if (!posts.length) throw new Error('文章列表为空')
-        window.location.href = posts[Math.floor(Math.random() * posts.length)].u
-      }).catch(function () { window.location.href = '/' })
+        if(window.pjax) window.pjax.loadUrl(posts[Math.floor(Math.random() * posts.length)].u); else window.location.href = posts[Math.floor(Math.random() * posts.length)].u
+      }).catch(function () { if(window.pjax) window.pjax.loadUrl('/'); else window.location.href = '/' })
     })
     actions.appendChild(stars)
     actions.appendChild(note)
