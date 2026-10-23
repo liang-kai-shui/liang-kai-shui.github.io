@@ -775,3 +775,7 @@ body[data-page-type='music'] .lks-list-head { margin-top: 18px; }
   .lks-submit:hover,
   .lks-emoji-item:hover { transform: none; }
 }
+
+.lks-target-status { margin: 12px 0; color: var(--lks-muted); font-size: 13px; }
+.lks-target-status[hidden] { display: none; }
+.lks-item { scroll-margin-block: 100px 40px; }

@@ -124,8 +124,7 @@
     retry.type = 'button'
     retry.hidden = true
     retry.addEventListener('click', function () {
-      state.page = 1
-      load(root, false)
+      load(root, false).then(function (ok) { if (ok) locateTarget(root) })
     })
     listStatus.append(statusText, retry)
     root.appendChild(listStatus)
@@ -136,11 +135,15 @@
     more.type = 'button'
     more.style.display = 'none'
     more.addEventListener('click', function () {
-      state.page += 1
       load(root, true)
     })
     footer.appendChild(more)
     root.appendChild(footer)
+    var targetStatus = el('p', 'lks-target-status')
+    targetStatus.setAttribute('role', 'status')
+    targetStatus.hidden = true
+    listBox.before(targetStatus)
+    state.targetStatusEl = targetStatus
     state.listBox = listBox
     state.moreBtn = more
     state.listStatusEl = listStatus
@@ -431,17 +434,67 @@
     })
   }
 
-  function highlightTarget () {
-    var match = /^#comment-(\d+)$/.exec(location.hash)
-    if (!match) return
-    var node = document.getElementById('comment-' + match[1])
-    if (!node) return
-    requestAnimationFrame(function () {
-      node.scrollIntoView({block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'})
-      node.classList.add('is-target')
-      setTimeout(function () { node.classList.remove('is-target') }, 2600)
-    })
+  function active (context, root) {
+    return state === context && root.isConnected && context.path === currentPath()
   }
+
+  function targetMessage (context, text) {
+    context.targetStatusEl.textContent = text
+    context.targetStatusEl.hidden = !text
+  }
+
+  async function locateTarget (root) {
+    var context = state, hash = location.hash
+    var match = /^#comment-([1-9]\d*)$/.exec(hash)
+    if (!match || !active(context, root) || context.locatingHash === hash || context.resolvedHash === hash) return
+    var run = (context.locateRun || 0) + 1
+    context.locateRun = run
+    context.locatingHash = hash
+    targetMessage(context, '正在定位这条评论…')
+    document.dispatchEvent(new CustomEvent('lks:comment-target'))
+    function current () { return active(context, root) && location.hash === hash && context.locateRun === run }
+    try {
+      if (context.pending) await context.pending
+      while (current() && !document.getElementById('comment-' + match[1])) {
+        if (context.failed) {targetMessage(context, '评论加载中断，点击“重新加载”后会继续定位。'); return}
+        if (!context.hasMore) {
+          targetMessage(context, '暂时找不到这条评论，可能已删除或尚未公开。')
+          context.resolvedHash = hash
+          return
+        }
+        if (!await load(root, true)) {
+          if (current()) targetMessage(context, '评论加载中断，点击“重新加载”后会继续定位。')
+          return
+        }
+      }
+      if (!current()) return
+      context.resolvedHash = hash
+      targetMessage(context, '')
+      // Allow the music drawer's opening transition and comment CSS to settle.
+      setTimeout(function () {
+        if (!current()) return
+        var node = document.getElementById('comment-' + match[1])
+        if (!node) return
+        node.tabIndex = -1
+        node.focus({preventScroll: true})
+        node.scrollIntoView({block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'})
+        node.classList.add('is-target')
+        setTimeout(function () { node.classList.remove('is-target') }, 2600)
+      }, context.path === '/music/' ? 280 : 80)
+    } finally {
+      if (context.locateRun === run) context.locatingHash = ''
+    }
+  }
+
+  window.addEventListener('hashchange', function () {
+    var root = document.getElementById(CONTAINER_ID)
+    if (!root || !state.targetStatusEl) return
+    state.locateRun = (state.locateRun || 0) + 1
+    state.locatingHash = ''; state.resolvedHash = ''
+    targetMessage(state, '')
+    root.querySelectorAll('.is-target').forEach(function (node) { node.classList.remove('is-target') })
+    locateTarget(root)
+  })
 
   function clearReply () {
     state.replyTo = null
@@ -545,34 +598,49 @@
   }
 
   function load (root, append) {
-    if (state.loading) return
-    state.loading = true
-    state.retryBtn.hidden = true
-    state.listStatusEl.classList.add('is-loading')
-    state.listStatusTextEl.textContent = append ? '' : (state.path === '/comments/' ? '正在加载留言…' : '正在加载评论…')
-    state.moreBtn.disabled = true
-    state.moreBtn.textContent = '加载中…'
-    api('/api/comments?path=' + encodeURIComponent(state.path) + '&page=' + state.page + '&pageSize=' + PAGE_SIZE)
+    var context = state
+    if (context.loading) return context.pending
+    var page = append ? context.page + 1 : 1
+    context.loading = true; context.failed = false
+    context.retryBtn.hidden = true
+    context.listStatusEl.classList.add('is-loading')
+    context.listStatusTextEl.textContent = append ? '' : (context.path === '/comments/' ? '正在加载留言…' : '正在加载评论…')
+    context.moreBtn.disabled = true
+    context.moreBtn.textContent = '加载中…'
+    context.pending = api('/api/comments?path=' + encodeURIComponent(context.path) + '&page=' + page + '&pageSize=' + PAGE_SIZE)
       .then(function (data) {
-        state.total = data.total
-        state.comments = append ? state.comments.concat(data.comments) : data.comments
+        if (!active(context, root)) return false
+        context.total = data.total
+        var seen = Object.create(null)
+        context.comments = (append ? context.comments.concat(data.comments) : data.comments).filter(function (comment) {
+          if (seen[comment.id]) return false
+          seen[comment.id] = true; return true
+        })
+        context.page = page
+        context.hasMore = !!data.hasMore && data.comments.length > 0
         renderList()
-        highlightTarget()
-        state.moreBtn.style.display = data.hasMore ? '' : 'none'
-        state.listStatusTextEl.textContent = ''
+        context.moreBtn.style.display = context.hasMore ? '' : 'none'
+        context.listStatusTextEl.textContent = ''
         updateHeadline()
+        return true
       })
       .catch(function () {
-        if (append) state.page = Math.max(1, state.page - 1)
-        state.listStatusTextEl.textContent = (state.path === '/comments/' ? '留言' : '评论') + '暂时没加载出来，请稍后重试。'
-        state.retryBtn.hidden = false
+        if (!active(context, root)) return false
+        context.failed = true
+        context.listStatusTextEl.textContent = (context.path === '/comments/' ? '留言' : '评论') + '暂时没加载出来，请稍后重试。'
+        context.retryBtn.hidden = false
+        return false
       })
-      .then(function () {
-        state.loading = false
-        state.listStatusEl.classList.remove('is-loading')
-        state.moreBtn.disabled = false
-        state.moreBtn.textContent = '加载更多'
+      .then(function (ok) {
+        context.loading = false
+        if (active(context, root)) {
+          context.listStatusEl.classList.remove('is-loading')
+          context.moreBtn.disabled = false
+          context.moreBtn.textContent = '加载更多'
+        }
+        return ok
       })
+    return context.pending
   }
 
   function updateHeadline () {
@@ -585,13 +653,13 @@
     var root = document.getElementById(CONTAINER_ID)
     if (!root) return
     var path = currentPath()
-    if (root.getAttribute('data-path') === path) return   // pjax 后同页不重复初始化
+    if (root.getAttribute('data-path') === path) { locateTarget(root); return }   // pjax 后同页不重复初始化
     root.setAttribute('data-path', path)
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css?v=20261017-comments-3')
+    loadCSS('/css/comment.css?v=20261023-reading-1')
     render(root)
     updateHeadline()
-    load(root, false)
+    load(root, false).then(function () { locateTarget(root) })
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)
