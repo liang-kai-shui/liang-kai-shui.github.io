@@ -1,23 +1,6 @@
 /* 小动效集中放在这里，方便想清静时一处关闭。 */
-/* 卡片内容一开始就接近完全可见；只做很短的一次轻推入场。 */
-@media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
-  #recent-posts .recent-post-item {
-    animation: lks-card-enter 320ms cubic-bezier(.2, .8, .2, 1) backwards;
-  }
-  #aside-content .card-widget {
-    animation: lks-card-enter 280ms cubic-bezier(.2, .8, .2, 1) backwards;
-  }
-  /* 渐变由独立背景层平移，卡片本身只做一次轻推入场。 */
-  #aside-content > .card-widget.card-info {
-    animation: lks-card-enter 280ms cubic-bezier(.2, .8, .2, 1) backwards !important;
-  }
-}
-/* 背景和装饰画布不再耗时 4 秒从全透明浮现；滚动模糊仍由 bg.js 控制。 */
+/* Page and dialog motion is owned by src/styles/motion.css. */
 #web_bg, canvas:not(#ribbon-canvas) { animation: none !important; }
-@keyframes lks-card-enter {
-  from { opacity: .92; transform: translateY(10px) scale(.99); }
-  to { opacity: 1; transform: none; }
-}
 
 /* 新配色从被按下的按钮处展开。没有 View Transition 的浏览器照常切换。 */
 html.lks-theme-switching::view-transition-old(root) { animation: none; }
@@ -25,22 +8,6 @@ html.lks-theme-switching::view-transition-new(root) { animation: lks-theme-revea
 @keyframes lks-theme-reveal {
   from { clip-path: circle(0 at var(--lks-vt-x, 50%) var(--lks-vt-y, 50%)); }
   to { clip-path: circle(150vmax at var(--lks-vt-x, 50%) var(--lks-vt-y, 50%)); }
-}
-
-/* 标题出现时划过一条光；目录沿用主题原本的 active 定位。 */
-#article-container :is(h2, h3, h4).lks-heading-lit {
-  background-image: linear-gradient(90deg, #49b1f5, transparent);
-  background-repeat: no-repeat;
-  background-position: left bottom;
-  animation: lks-heading-glow 850ms ease-out both;
-}
-@keyframes lks-heading-glow {
-  0% { background-size: 0 2px; filter: drop-shadow(0 0 0 rgba(73, 177, 245, 0)); }
-  45% { background-size: 130px 2px; filter: drop-shadow(0 0 9px rgba(73, 177, 245, .8)); }
-  100% { background-size: 0 2px; filter: drop-shadow(0 0 0 rgba(73, 177, 245, 0)); }
-}
-#card-toc .toc-link.active {
-  box-shadow: inset 3px 0 #49b1f5;
 }
 
 /* 只有真正复制成功才亮起；1.2 秒后自动恢复。 */

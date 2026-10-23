@@ -6,7 +6,7 @@
   var themeReplay = false
   var motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
 
-  function reducedMotion () { return motionMedia.matches }
+  function reducedMotion () { return motionMedia.matches || document.documentElement.classList.contains('lks-motion-off') }
 
   // Homepage hover is owned by reading.css; no per-pointer card transforms.
 
@@ -85,18 +85,7 @@
 
   function initHeadings () {
     if (headingObserver) headingObserver.disconnect()
-    if (reducedMotion() || typeof IntersectionObserver === 'undefined') return
-    var headings = document.querySelectorAll('#article-container h2, #article-container h3, #article-container h4')
-    if (!headings.length) return
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return
-        entry.target.classList.add('lks-heading-lit')
-        observer.unobserve(entry.target)
-      })
-    }, { rootMargin: '0px 0px -25% 0px', threshold: 0 })
-    headingObserver = observer
-    headings.forEach(function (heading) { observer.observe(heading) })
+    headingObserver = null // Clicked chapter feedback belongs to chapter-motion.ts.
   }
 
   function initCopyButtons () {
