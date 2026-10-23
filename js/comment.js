@@ -477,7 +477,7 @@
         if (!node) return
         node.tabIndex = -1
         node.focus({preventScroll: true})
-        node.scrollIntoView({block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'})
+        node.scrollIntoView({block: 'center', behavior: document.documentElement.classList.contains('lks-motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'})
         node.classList.add('is-target')
         setTimeout(function () { node.classList.remove('is-target') }, 2600)
       }, context.path === '/music/' ? 280 : 80)

@@ -1,7 +1,7 @@
 (function () {
   if (window.lksSupport) return
   var trigger
-  function close() { var d = document.getElementById('lks-support-dialog'); if (d) d.close(); if (trigger && trigger.isConnected) trigger.focus() }
+  function close(immediate) { var d=document.getElementById('lks-support-dialog');var restore=function(){if(trigger&&trigger.isConnected)trigger.focus({preventScroll:true})};if(d&&d.open&&window.lksDialogMotion&&immediate!==true)return window.lksDialogMotion.close(d).then(restore);if(d)d.close();restore() }
   window.lksSupport = { close: close }
   document.addEventListener('click', function (event) {
     var button = event.target.closest('[data-support-open]')
@@ -21,7 +21,7 @@
     if (!image || !/^https?:\/\//.test(new URL(image, location.origin).href)) return
     dialog.querySelector('img').src = image
     dialog.querySelector('a').href = image
-    dialog.showModal()
+    if(window.lksDialogMotion)window.lksDialogMotion.open(dialog,'support');else dialog.showModal()
   })
-  document.addEventListener('pjax:send', close)
+  document.addEventListener('pjax:send', function(){close(true)})
 })()
