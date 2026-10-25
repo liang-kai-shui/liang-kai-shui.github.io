@@ -44,6 +44,78 @@
     try { localStorage.setItem(META_KEY, JSON.stringify(meta)) } catch (e) { /* 隐私模式下忽略 */ }
   }
 
+  /* Drafts contain only text and the public reply target, never contact details. */
+  var DRAFT_KEY = 'lks-comment-drafts'
+  var volatileDrafts = null
+  function readDrafts () {
+    var rows = volatileDrafts
+    if (!rows) { try { rows = JSON.parse(localStorage.getItem(DRAFT_KEY) || '[]') } catch (e) { rows = [] } }
+    if (!Array.isArray(rows)) rows = []
+    return rows.filter(function (d) {
+      return d && typeof d.path === 'string' && d.path.charAt(0) === '/' && d.path.length <= 500 && typeof d.content === 'string' && d.content.length <= 2000 && d.content.trim() && Number.isFinite(d.time) && d.time > Date.now() - 7 * 86400000 && d.time < Date.now() + 300000
+    }).sort(function (a, b) { return b.time - a.time }).slice(0, 30)
+  }
+  function writeDrafts (rows) {
+    try {
+      if (rows.length) localStorage.setItem(DRAFT_KEY, JSON.stringify(rows))
+      else localStorage.removeItem(DRAFT_KEY)
+      volatileDrafts = null
+      return true
+    } catch (e) { volatileDrafts = rows; return false }
+  }
+  function safeReply (r) {
+    return r && Number.isSafeInteger(r.id) && r.id > 0 && Number.isSafeInteger(r.rid) && r.rid > 0 && typeof r.nick === 'string' ? { id: r.id, rid: r.rid, nick: r.nick.slice(0, 30) } : null
+  }
+  function attachDraft (root, form, content, counter, context) {
+    var tools = el('div', 'lks-draft-tools'), status = el('span', 'lks-draft-status')
+    status.setAttribute('role', 'status')
+    var clear = el('button', 'lks-draft-clear', '清除草稿'); clear.type = 'button'
+    tools.append(status, clear); tools.hidden = true
+    form.querySelector('.lks-form-tools').after(tools)
+    var dirty = false, timer = 0, stored = true
+    function label (text) { if (status.textContent !== text) status.textContent = text }
+    function flush () {
+      clearTimeout(timer)
+      if (!dirty) return stored || !content.value.trim()
+      var rows = readDrafts().filter(function (d) { return d.path !== context.path })
+      if (content.value.trim()) rows.unshift({ path: context.path, content: content.value.slice(0, 2000), reply: safeReply(context.replyTo), time: Date.now() })
+      stored = writeDrafts(rows.slice(0, 30)); dirty = !stored
+      tools.hidden = !content.value.trim()
+      label(stored ? '草稿已保存在此浏览器 · 保留 7 天' : '浏览器暂时无法保存，草稿仅保留在当前页面')
+      return stored || !content.value.trim()
+    }
+    function changed () {
+      dirty = true; tools.hidden = !content.value.trim(); clearTimeout(timer)
+      timer = setTimeout(flush, 350)
+    }
+    context.flushDraft = flush; context.markDraft = changed
+    content.addEventListener('input', changed)
+    clear.addEventListener('click', function () {
+      content.value = ''; if (context === state) clearReply()
+      content.dispatchEvent(new Event('input', { bubbles: true })); flush(); content.focus()
+    })
+    var saved = readDrafts().find(function (d) { return d.path === context.path })
+    if (saved) {
+      content.value = saved.content; counter.textContent = content.value.length + ' / 2000'
+      if (safeReply(saved.reply)) startReply(root, saved.reply, false)
+      stored = volatileDrafts === null; dirty = !stored
+      tools.hidden = false; label(stored ? '已恢复这页的草稿 · 仅此浏览器保存' : '已恢复当前会话草稿，刷新前请确认内容已保存')
+    }
+  }
+  function forgetSubmittedDraft (path, content, time) {
+    writeDrafts(readDrafts().filter(function (d) { return d.path !== path || d.content !== content || d.time > time }))
+  }
+  function flushDraft () {
+    var saved = !state.flushDraft || state.flushDraft()
+    if (volatileDrafts) { var rows = readDrafts(); return writeDrafts(rows) || !rows.length }
+    return saved
+  }
+  document.addEventListener('astro:before-preparation', flushDraft)
+  document.addEventListener('pjax:send', flushDraft)
+  document.addEventListener('lks:before-reload', flushDraft)
+  window.addEventListener('pagehide', flushDraft)
+  document.addEventListener('visibilitychange', function () { if (document.hidden) flushDraft() })
+
   // 同一篇文章在带不带 index.html 的地址下要算同一页
   function currentPath () {
     var p = window.location.pathname || '/'
@@ -224,6 +296,7 @@
     state.replyBar = replyBar
     state.contentEl = content
     state.contentPlaceholder = content.placeholder
+    attachDraft(root, form, content, counter, state)
 
     form.addEventListener('submit', function (e) {
       e.preventDefault()
@@ -500,9 +573,10 @@
     state.replyTo = null
     if (state.replyBar) state.replyBar.style.display = 'none'
     if (state.contentEl) state.contentEl.placeholder = state.contentPlaceholder
+    if (state.markDraft) state.markDraft()
   }
 
-  function startReply (root, c) {
+  function startReply (root, c, focus) {
     state.replyTo = { id: c.id, rid: c.rid || c.id, nick: c.nick }
     state.replyBar.style.display = ''
     state.replyBar.innerHTML = ''
@@ -517,10 +591,11 @@
         return cancel
       })()
     )
-    var ta = root.querySelector('.lks-textarea')
+    if (state.markDraft && focus !== false) state.markDraft()
+    var ta = root.querySelector('.lks-textarea') || state.contentEl
     if (ta) {
       ta.placeholder = '回复 @' + c.nick + '…'
-      ta.focus()
+      if (focus !== false) ta.focus()
     }
   }
 
@@ -567,6 +642,8 @@
       payload.rid = state.replyTo.rid
     }
 
+    flushDraft()
+    var context = state, sentText = fields.content.value, sentAt = Date.now()
     fields.submit.disabled = true
     setMsg('发送中…')
     api('/api/comments', {
@@ -576,9 +653,13 @@
     })
       .then(function (data) {
         saveMeta({ nick: nick, mail: payload.mail, link: payload.link })
-        fields.content.value = ''
-        fields.content.dispatchEvent(new Event('input', { bubbles: true }))
-        clearReply()
+        forgetSubmittedDraft(payload.path, sentText, sentAt)
+        if (!active(context, root)) return
+        if (fields.content.value === sentText) {
+          fields.content.value = ''
+          fields.content.dispatchEvent(new Event('input', { bubbles: true }))
+          clearReply(); flushDraft()
+        }
         if (data.pending) {
           setMsg('已提交，等站长审核后就会显示 ✅', 'ok')
         } else if (data.comment) {
@@ -593,7 +674,7 @@
           try { window.turnstile.reset() } catch (e) {}
         }
       })
-      .catch(function (err) { setMsg(err.message, 'err') })
+      .catch(function (err) { if (active(context, root)) setMsg(err.message, 'err') })
       .then(function () { fields.submit.disabled = false })
   }
 
@@ -655,8 +736,9 @@
     var path = currentPath()
     if (root.getAttribute('data-path') === path) { locateTarget(root); return }   // pjax 后同页不重复初始化
     root.setAttribute('data-path', path)
+    flushDraft()
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css?v=20261023-reading-1')
+    loadCSS('/css/comment.css?v=20261025-comfort-1')
     render(root)
     updateHeadline()
     load(root, false).then(function () { locateTarget(root) })
@@ -668,5 +750,5 @@
   // pjax 站内跳转后重新渲染
   if (window.btf && window.btf.addGlobalFn) window.btf.addGlobalFn('pjaxComplete', init, 'lksComment')
   document.addEventListener('pjax:complete', init)
-  window.lksComment = { init: init, state: function () { return state } }
+  window.lksComment = { init: init, saveDraft: flushDraft, state: function () { return state } }
 })()
