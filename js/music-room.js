@@ -46,15 +46,27 @@
   function el (tag, cls, text) { var node = document.createElement(tag); if (cls) node.className = cls; if (text !== undefined) node.textContent = text; return node }
   function time (seconds) { seconds = Math.max(0, Math.floor(seconds || 0)); return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0') }
 
+  function subtitleControl (mode, text) {
+    if (!subtitle || !subtitle.isConnected) return
+    mode = mode || subtitle.dataset.mode
+    text = text || subtitle.dataset.text || ''
+    var isQuote = mode === 'quote', busy = isQuote && !!quoteRequest
+    subtitle.disabled = !isQuote
+    subtitle.setAttribute('aria-busy', String(busy))
+    subtitle.setAttribute('aria-disabled', String(!isQuote || busy))
+    subtitle.title = isQuote ? busy ? '正在换一句…' : '点击换一句' : '正在显示歌词'
+    subtitle.setAttribute('aria-label', isQuote ? '一言：' + text + (busy ? '，正在刷新' : '，点击换一句') : '当前歌词：' + text)
+  }
+  function noTypingMotion () { return typingMotion.matches || document.documentElement.classList.contains('lks-motion-off') }
   function subtitleText (text, isLyric) {
     if (!subtitle || !subtitle.isConnected) return
     var mode = isLyric ? 'lyric' : 'quote'
     var source = isLyric ? '' : quoteSource
+    subtitleControl(mode, text)
     if (subtitle.dataset.text === text && subtitle.dataset.mode === mode && subtitle.dataset.source === source) return
     cancelTyping()
     subtitle.classList.add('lks-listening')
     subtitle.dataset.mode = mode
-    subtitle.setAttribute('aria-label', isLyric ? '当前歌词' : '一言')
     subtitle.dataset.text = text
     subtitle.dataset.source = source
     var previous = subtitle.querySelector('.is-current')
@@ -80,13 +92,13 @@
     var index = 0
     function step () {
       if (run !== typingRun || !line.isConnected) return
-      if (typingMotion.matches) index = chars.length
+      if (noTypingMotion()) index = chars.length
       else ++index
       copy.textContent = chars.slice(0, index).join('')
       if (index >= chars.length) { line.classList.add('is-typed'); citation.hidden = !source; return }
       typingTimer = setTimeout(step, /[，。！？；,.!?;]/.test(chars[index - 1]) ? 160 : 55)
     }
-    if (typingMotion.matches) step()
+    if (noTypingMotion()) step()
     else typingTimer = setTimeout(step, 90)
   }
   function showSubtitle () {
@@ -149,6 +161,7 @@
     if (quoteRequest) quoteRequest.abort()
     var controller = new AbortController()
     quoteRequest = controller
+    subtitleControl()
     var timer = setTimeout(function () { controller.abort() }, 9000)
     return requestQuote(controller, quote || previousQuote)
       .then(function (data) {
@@ -159,7 +172,7 @@
         if (run !== quoteRun || playing) return
         useQuote(localQuote())
         showSubtitle()
-      }).finally(function () { clearTimeout(timer); controller.abort(); if (quoteRequest === controller) quoteRequest = null })
+      }).finally(function () { clearTimeout(timer); controller.abort(); if (quoteRequest === controller) { quoteRequest = null; subtitleControl() } })
   }
 
   function parseLrc (text) {
@@ -394,6 +407,9 @@
     if (node === subtitle && node && node.isConnected) return
     subtitle = node
     if (!subtitle) return
+    node.addEventListener('click', function () {
+      if (node === subtitle && node.dataset.mode === 'quote' && !playing && !quoteRequest) refreshQuote()
+    })
     subtitle.replaceChildren()
     delete subtitle.dataset.text
     update()
@@ -482,7 +498,9 @@
   document.addEventListener('lks:music-layout', function (event) { positionLyrics(event.detail && event.detail.instant); schedule() })
   document.addEventListener('pjax:complete', initRoom)
   document.addEventListener('pjax:send', cancelTyping)
-  typingMotion.addEventListener('change', function () { if (subtitle && subtitle.dataset.mode === 'quote') { delete subtitle.dataset.text; showSubtitle() } })
+  function redrawQuote () { if (subtitle && subtitle.dataset.mode === 'quote') { delete subtitle.dataset.text; showSubtitle() } }
+  typingMotion.addEventListener('change', redrawQuote)
+  document.addEventListener('lks:motion-change', redrawQuote)
   window.addEventListener('resize', function () { positionLyrics(); schedule() }, { passive: true })
   window.lksListening = { mount: mountSubtitle, parse: parseLrc }
   document.dispatchEvent(new CustomEvent('lks:listening-ready'))
