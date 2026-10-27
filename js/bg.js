@@ -4,8 +4,8 @@
  * 图源优先用「栗次元 API」（https://t.alcy.cc）：
  *   桌面端：二次元自适应 /ycy  ｜ PC 横图 /pc  ｜ ACG 动图 /acg   ← 按权重随机挑一个
  *   移动端：移动竖图 /mp                                        ← 屏幕窄就用竖图
- * 使用接口的 ?json 输出取得固定原文件地址（实际返回纯文本 URL），所以：
- *   - 每次刷新都能换（URL 上带随机参数，绕开浏览器/CDN 缓存）
+ * 联网换图使用 /json?pc=6、/json?mp=6 等文档接口，取得候选原图地址：
+ *   - 首屏用本地压缩图库的持久洗牌队列；联网候选另按近期记录去重
  *   - /acg 是视频，用 <video> 铺在背景层，不是 CSS background-image
  *
  * 兜底：接口超时/挂了，就退回自己的图床底图池（img/bg/，由 tools/pick-backgrounds.py 维护）。
@@ -61,7 +61,7 @@
   var message = ''
   var TYPE_KEY = 'lks-bg-type'
   var TYPES = [
-    { id: 'auto', label: '随机推荐', note: '按屏幕挑选，偶尔来张动态' },
+    { id: 'auto', label: '随机推荐', note: '首屏压缩图，手动换图联网随机' },
     { id: 'static', label: '静态随机', note: '只挑静态壁纸' },
     { id: 'acg', label: '动态壁纸', note: '静音循环的动态背景' },
     { id: 'ycy', label: '二次元插画', note: '根据屏幕自适应' },
@@ -69,6 +69,9 @@
     { id: 'mp', label: '手机竖图', note: '适合竖屏浏览' },
     { id: 'pool', label: '收藏图池', note: '从博客自有图池挑一张' }
   ]
+  var recentKey = 'lks-bg-recent-v2'
+  var recentUrls = []
+  try { var savedRecent = JSON.parse(localStorage.getItem(recentKey) || '[]'); if (Array.isArray(savedRecent)) recentUrls = savedRecent.filter(function (url) { return typeof url === 'string' }).slice(-40) } catch (_) {}
   var selectedType = 'auto'
   try { selectedType = normalType(localStorage.getItem(TYPE_KEY)) } catch (e) {}
 
@@ -113,24 +116,39 @@
     return list[list.length - 1]
   }
 
-  // 接口地址：带随机参数，绕开缓存，保证每次刷新都是一张新的
+  // The cache nonce does not prevent API repeats; choose among fresh candidates ourselves.
   function apiUrl (name) {
-    return API_BASE + '/' + name + '?json&r=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+    var category = name === 'ycy' ? isMobile() ? 'mp' : 'pc' : name
+    return API_BASE + '/json?' + category + '=6&r=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
   }
-
-  // 先固定这一张的地址，下载时不再访问随机接口，避免保存成另一张。
+  function candidateUrls (data, source) {
+    if (!data || data.code !== 200) throw new Error('图源返回失败')
+    var rows = Array.isArray(data.data) ? data.data : data.data ? [data.data] : []
+    var links = rows.map(function (row) { return row && row.link }).concat(Array.isArray(data.links) ? data.links : [])
+    return Array.from(new Set(links.filter(function (link) {
+      if (typeof link !== 'string') return false
+      try {
+        var url = new URL(link), extension = source.video ? /\.(mp4|webm)$/i : /\.(webp|png|jpe?g|gif)$/i
+        return url.origin === API_BASE && /^\/pic\/[a-z0-9/_-]+\.[a-z0-9]+$/i.test(url.pathname) && extension.test(url.pathname) && !url.search && !url.hash
+      } catch (_) { return false }
+    })))
+  }
   function resolveSource (source, job) {
     var controller = new AbortController()
     var timer = setTimeout(function () { controller.abort() }, 6000)
     if (job) job.cancel.push(function () { controller.abort() })
-    return fetch(apiUrl(source.name), { signal: controller.signal, credentials: 'omit', cache: 'no-store' })
-      .then(function (res) { if (!res.ok) throw new Error('图源暂不可用'); return res.text() })
-      .then(function (text) {
-        var url = new URL(text.trim())
-        if (url.origin !== API_BASE || !/^\/pic\/[a-z0-9/_-]+\.(webp|png|jpe?g|gif|mp4|webm)$/i.test(url.pathname)) throw new Error('原文件地址不可用')
-        return url.href
-      })
-      .finally(function () { clearTimeout(timer) })
+    function request (retry) {
+      return fetch(apiUrl(source.name), { signal: controller.signal, credentials: 'omit', cache: 'no-store' })
+        .then(function (res) { if (!res.ok) throw new Error('图源暂不可用'); return res.json() })
+        .then(function (data) {
+          if (!alive(job)) throw new Error('换图已取消')
+          var candidates = candidateUrls(data, source).filter(function (url) { return url !== currentUrl && !recentUrls.includes(url) })
+          if (candidates.length) return candidates[Math.floor(Math.random() * candidates.length)]
+          if (!retry && !controller.signal.aborted) return request(true)
+          throw new Error('候选壁纸近期已经看过')
+        })
+    }
+    return request(false).finally(function () { clearTimeout(timer) })
   }
 
   function injectStyleOnce () {
@@ -178,7 +196,8 @@
     currentUrl = url
     currentSource = source
     currentKind = kind
-    try { localStorage.setItem(POOL.lastKey, url) } catch (e) { /* 隐私模式忽略 */ }
+    recentUrls = recentUrls.filter(function (item) { return item !== url }).concat(url).slice(-40)
+    try { localStorage.setItem(POOL.lastKey, url); localStorage.setItem(recentKey, JSON.stringify(recentUrls)) } catch (e) { /* 隐私模式忽略 */ }
   }
 
   function preloadImage (url, job) {
@@ -287,6 +306,7 @@
   }
 
   function pickFromPool (list) {
+    if (window.__lksBgChoose) { var selected = window.__lksBgChoose(list.map(urlOf), 'remote-collection'); return list.find(function (name) { return urlOf(name) === selected }) }
     if (list.length < 2) return list[0]
     var last = ''
     try { last = localStorage.getItem(POOL.lastKey) || '' } catch (e) { /* 忽略 */ }
@@ -298,6 +318,12 @@
   function usePool (why, job) {
     if (!alive(job)) return Promise.resolve(false)
     console.warn('[bg] 改用图床底图池兜底：' + why)
+    var local = window.__lksBackgrounds || []
+    if (local.length && window.__lksBgChoose) {
+      var original = window.__lksBgChoose(local.map(function (item) { return item.original }), 'collection')
+      var chosen = local.find(function (item) { return item.original === original })
+      return applyImage(isMobile() ? chosen.mobile : chosen.desktop, { name: 'pool', label: '收藏图池' }, job, chosen.original)
+    }
     return loadPool(job).then(function (list) {
       if (!alive(job)) return false
       return applyImage(urlOf(pickFromPool(list)), { name: 'pool', label: '收藏图池' }, job)
