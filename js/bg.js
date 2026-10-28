@@ -173,7 +173,8 @@
   function applyBackground (url) {
     var bg = document.getElementById('web_bg')
     if (!bg) return false
-    bg.style.backgroundImage = 'url("' + url + '")'
+    if (window.lksSurfaceMotion) window.lksSurfaceMotion.background(bg, url)
+    else bg.style.backgroundImage = 'url("' + url + '")'
     var early = document.getElementById('lks-initial-bg-style'); if (early) early.remove()
     var video = document.getElementById(VIDEO_ID)
     discardVideo(video)

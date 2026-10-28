@@ -91,6 +91,7 @@
       if (selected) link.setAttribute('aria-current', 'true')
       else link.removeAttribute('aria-current')
     })
+    var finishMotion = window.lksSurfaceMotion ? window.lksSurfaceMotion.beginList(items) : function () {}
     items.replaceChildren()
     status.replaceChildren()
     status.hidden = !category
@@ -104,10 +105,14 @@
       clear.type = 'button'
       clear.dataset.clearCategory = 'true'
       status.appendChild(clear)
-      posts.forEach(function (post, index) { items.appendChild(postCard(post, index)) })
+      posts.forEach(function (post, index) {
+        var original = home.original.find(function (node) { var link = node.querySelector('.article-title'); return link && link.getAttribute('href') === post.url })
+        items.appendChild(original || postCard(post, index))
+      })
       if (!posts.length) items.appendChild(element('p', 'lks-filter-empty', '这个分类暂时没有文章。'))
     }
     if (window.pjax) window.pjax.refresh(items)
+    finishMotion()
   }
 
   function selectCategory (category) {

@@ -129,7 +129,10 @@
     ;(document.getElementById('site-runtime') || document.body).appendChild(box)
   }
 
+  var lightboxRun = 0
   function open (img) {
+    var origin = img.getBoundingClientRect()
+    ++lightboxRun
     if (!box) build()
     boxImg.src = img.currentSrc || img.src
     boxImg.alt = img.alt || ''
@@ -137,20 +140,23 @@
     ;(document.getElementById('site-runtime') || document.body).appendChild(box)
     lightboxOpen = true
     lockScroll(true)
-    // 下一帧再加 show，否则 transition 不生效
-    requestAnimationFrame(function () { box.classList.add('show') })
+    if (window.lksSurfaceMotion) window.lksSurfaceMotion.openImage(box, boxImg, img, origin)
+    requestAnimationFrame(function () { if (lightboxOpen) box.classList.add('show') })
   }
-
-  function close () {
+  function close (instant) {
     if (!box || !lightboxOpen) return
+    var run = ++lightboxRun
     lightboxOpen = false
     box.classList.remove('show')
-    setTimeout(function () {
-      if (!lightboxOpen && box && box.parentNode) box.parentNode.removeChild(box)
-    }, 240)
-    lockScroll(false)
-    // 如果抽屉还开着，把锁交还给抽屉
-    setTimeout(syncDrawerLock, 260)
+    function finish () {
+      if (run !== lightboxRun || lightboxOpen) return
+      if (box.parentNode) box.parentNode.removeChild(box)
+      lockScroll(false)
+      syncDrawerLock()
+    }
+    if (window.lksSurfaceMotion) window.lksSurfaceMotion.closeImage(box, boxImg, !!instant).then(finish)
+    else if (instant) finish()
+    else setTimeout(finish, 240)
   }
 
   document.addEventListener('click', function (e) {
