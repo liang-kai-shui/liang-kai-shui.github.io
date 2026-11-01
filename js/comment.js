@@ -445,7 +445,7 @@
       if (!value || invalid) return
       var current = run
       timer = setTimeout(function () {
-        controller = new AbortController(); var timeout = setTimeout(function () { controller.abort() }, 6500)
+        controller = new AbortController(); var timeout = setTimeout(function () { controller.abort() }, 10000)
         hint.textContent = '正在获取头像…'
         fetch(API + '/api/avatar/preview', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({qq: value}), signal: controller.signal})
           .then(function (res) { if (!res.ok || !(res.headers.get('content-type') || '').startsWith('image/')) throw new Error('avatar'); return res.blob() })
@@ -951,7 +951,7 @@
     if (state.tree) state.tree.destroy()
     if (state.disposeAvatar) state.disposeAvatar()
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css?v=20261101-thread-qq-1')
+    loadCSS('/css/comment.css?v=20261101-thread-qq-2')
     render(root)
     updateHeadline()
     load(root, false).then(function () { locateTarget(root) })
