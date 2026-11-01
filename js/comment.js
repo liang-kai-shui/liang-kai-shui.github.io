@@ -182,11 +182,17 @@
 
   function render (root) {
     root.innerHTML = ''
-    root.appendChild(buildForm(root))
+    var home = el('div', 'lks-form-home'); state.formHome = home; home.append(buildForm(root)); root.append(home)
     var listHead = el('div', 'lks-list-head')
     var listTitle = el('h3', 'lks-list-title', state.path === '/comments/' ? '大家说了什么' : state.path === '/music/' ? '听友留言' : '评论区')
     var listCount = el('span', 'lks-list-count', '0 条')
-    var listOrder = el('span', 'lks-list-order', '最新在前')
+    var listOrder = el('div', 'lks-list-order')
+    ;[['最新讨论', 'latest'], ['最早讨论', 'earliest']].forEach(function (pair) {
+      var button = el('button', 'lks-op', pair[0]); button.type = 'button'; button.dataset.order = pair[1]
+      button.setAttribute('aria-pressed', String(pair[1] === (state.order || 'latest')))
+      button.addEventListener('click', function () { if (state.loading) return; state.order = pair[1]; listOrder.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === button)) }); load(root, false) })
+      listOrder.append(button)
+    })
     listHead.append(listTitle, listCount, listOrder)
     root.appendChild(listHead)
     var listStatus = el('div', 'lks-list-status')
@@ -201,7 +207,11 @@
     listStatus.append(statusText, retry)
     root.appendChild(listStatus)
     var listBox = el('div', 'lks-list')
-    root.appendChild(listBox)
+    var treeTools = el('div', 'lks-tree-toolbar')
+    treeTools.append(el('span', '', '按分支阅读'))
+    ;[['展开一层', true], ['全部收起', false]].forEach(function (pair) { var b = el('button', 'lks-op', pair[0]); b.type = 'button'; b.addEventListener('click', function () { if (state.tree) state.tree.bulk(pair[1]) }); treeTools.append(b) })
+    treeTools.hidden = true; state.treeTools = treeTools
+    root.append(treeTools, listBox)
     var footer = el('div', 'lks-footer')
     var more = el('button', 'lks-more', '加载更多')
     more.type = 'button'
@@ -226,7 +236,7 @@
 
   function buildForm (root) {
     var meta = getMeta()
-    var form = el('form', 'lks-form')
+    var form = el('form', 'lks-form'); state.form = form
     var isGuestbook = state.path === '/comments/'
     var isMusic = state.path === '/music/'
     var intro = el('div', 'lks-form-intro')
@@ -249,20 +259,20 @@
     link.autocomplete = 'url'
     var nickLabel = el('label', 'lks-field')
     nickLabel.append(el('span', 'lks-field-name', '昵称 · 必填'), nick)
-    row.appendChild(nickLabel)
+    var avatar = el('div', 'lks-avatar lks-editor-avatar'); fillAvatar(avatar, meta.nick); row.append(avatar, nickLabel)
     var extras = el('details', 'lks-extras')
-    if (meta.mail || meta.link) extras.open = true
-    extras.appendChild(el('summary', '', '邮箱和个人网站（选填）'))
+    if (meta.mail || meta.link || meta.qq) extras.open = true
+    extras.appendChild(el('summary', '', '选填信息 · QQ 头像 / 邮箱 / 网站'))
     var extraRow = el('div', 'lks-extra-row')
     var mailLabel = el('label', 'lks-field')
     mailLabel.append(el('span', 'lks-field-name', '邮箱 · 不会公开'), mail)
     var linkLabel = el('label', 'lks-field')
     linkLabel.append(el('span', 'lks-field-name', '个人网站'), link)
-    extraRow.append(mailLabel, linkLabel)
+    var qq = qqControls(meta, avatar, nick); extraRow.append(qq.label, mailLabel, linkLabel)
     extras.appendChild(extraRow)
 
     var content = el('textarea', 'lks-textarea')
-    content.placeholder = isGuestbook ? '给小窝留句话吧…' : '关于这篇文章，你想说什么？'
+    content.placeholder = isGuestbook ? '给小窝留句话吧…' : isMusic ? '这首歌让你想起了什么？' : '分享想法，或写下你遇到的问题…'
     content.maxLength = 2000
     content.rows = 4
     var contentLabel = el('label', 'lks-field lks-content-field')
@@ -289,8 +299,14 @@
     var tools = el('div', 'lks-form-tools')
     var counter = el('span', 'lks-counter', '0 / 2000')
     content.addEventListener('input', function () { counter.textContent = content.value.length + ' / 2000' })
-    tools.append(emojiBar(content), counter)
-    form.append(intro, replyBar, contentLabel, tools, row, extras, hp, turnstileBox, actions)
+    tools.append(emojiBar(content))
+    var code = el('button', 'lks-op', '代码'); code.type = 'button'; code.addEventListener('click', function () { insertAtCursor(content, '\n```\n代码写在这里\n```\n') }); tools.append(code)
+    var previewButton = el('button', 'lks-op', '预览'), preview = el('div', 'lks-content-preview'); preview.hidden = true; previewButton.type = 'button'; previewButton.setAttribute('aria-pressed', 'false')
+    previewButton.addEventListener('click', function () { preview.hidden = !preview.hidden; content.hidden = !preview.hidden; preview.textContent = content.value || '还没有内容'; previewButton.setAttribute('aria-pressed', String(!preview.hidden)); previewButton.textContent = preview.hidden ? '预览' : '继续编辑' })
+    tools.append(previewButton, counter)
+    if (isMusic) { var quoteSong = el('button', 'lks-op', '引用歌曲'); quoteSong.type = 'button'; quoteSong.addEventListener('click', function () { var player = window.lksMusic && window.lksMusic.player, song = player && player.list.audios[player.list.index]; if (song) insertAtCursor(content, '《' + song.name + '》— ' + (song.artist || '') + '\n') }); tools.insertBefore(quoteSong, counter) }
+    contentLabel.append(preview)
+    form.append(replyBar, row, extras, contentLabel, tools, hp, turnstileBox, actions)
 
     state.msgEl = msg
     state.replyBar = replyBar
@@ -300,7 +316,7 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault()
-      submitComment(root, { nick: nick, mail: mail, link: link, content: content, hp: hp, submit: submit })
+      submitComment(root, { nick: nick, qq: qq.input, mail: mail, link: link, content: content, hp: hp, submit: submit })
     })
     content.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -309,11 +325,12 @@
       }
     })
 
+    qq.input.addEventListener('change', remember)
     nick.addEventListener('change', remember)
     mail.addEventListener('change', remember)
     link.addEventListener('change', remember)
     function remember () {
-      saveMeta({ nick: nick.value.trim(), mail: mail.value.trim(), link: link.value.trim() })
+      saveMeta({ nick: nick.value.trim(), qq: qq.input.value.trim(), mail: mail.value.trim(), link: link.value.trim() })
     }
 
     if (CFG.turnstileSiteKey) mountTurnstile(turnstileBox)
@@ -401,13 +418,62 @@
     state.msgEl.className = 'lks-msg' + (type ? ' lks-msg-' + type : '')
   }
 
+  function fillAvatar (avatar, nick, url) {
+    avatar.replaceChildren(document.createTextNode((nick || '?').trim().charAt(0).toUpperCase()))
+    avatar.style.background = 'hsl(' + hueOf(nick || '') + ', 62%, 62%)'
+    if (!url) return
+    var img = el('img'); img.alt = ''; img.width = 100; img.height = 100; img.decoding = 'async'; img.referrerPolicy = 'no-referrer'
+    img.addEventListener('error', function () { img.remove() }, {once: true})
+    img.src = url; avatar.append(img)
+  }
+
+  function qqControls (meta, avatar, nick) {
+    var label = el('label', 'lks-field lks-qq-field'), qq = el('input', 'lks-input')
+    qq.type = 'text'; qq.name = 'qq'; qq.inputMode = 'numeric'; qq.autocomplete = 'off'; qq.maxLength = 12
+    qq.placeholder = '填写 QQ 号，使用 QQ 头像'; qq.value = typeof meta.qq === 'string' ? meta.qq : ''
+    var hint = el('span', 'lks-qq-status', '仅用于获取头像，号码不在评论中展示')
+    hint.id = 'lks-qq-status'; hint.setAttribute('role', 'status'); qq.setAttribute('aria-describedby', hint.id)
+    label.append(el('span', 'lks-field-name', 'QQ 号 · 选填'), qq, hint)
+    var context = state, timer = 0, run = 0, controller = null, objectUrl = ''
+    function clearImage () { if (objectUrl) URL.revokeObjectURL(objectUrl); objectUrl = ''; fillAvatar(avatar, nick.value) }
+    function update () {
+      clearTimeout(timer); run++; if (controller) controller.abort(); clearImage()
+      var value = qq.value.trim(), invalid = !!value && !/^[1-9]\d{4,11}$/.test(value)
+      qq.setCustomValidity(invalid ? '请输入 5–12 位数字的 QQ 号' : ''); qq.setAttribute('aria-invalid', String(invalid))
+      hint.classList.toggle('is-error', invalid)
+      hint.textContent = invalid ? '请输入 5–12 位数字，不含空格或字母' : value ? '准备获取 QQ 头像…' : '仅用于获取头像，号码不在评论中展示'
+      if (!value || invalid) return
+      var current = run
+      timer = setTimeout(function () {
+        controller = new AbortController(); var timeout = setTimeout(function () { controller.abort() }, 6500)
+        hint.textContent = '正在获取头像…'
+        fetch(API + '/api/avatar/preview', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({qq: value}), signal: controller.signal})
+          .then(function (res) { if (!res.ok || !(res.headers.get('content-type') || '').startsWith('image/')) throw new Error('avatar'); return res.blob() })
+          .then(function (blob) {
+            if (run !== current || state !== context || !qq.isConnected) return
+            objectUrl = URL.createObjectURL(blob); fillAvatar(avatar, nick.value, objectUrl)
+            var image = avatar.querySelector('img')
+            image.addEventListener('load', function () { if (run === current) hint.textContent = '已使用 QQ 头像 · 号码不在评论中展示' }, {once: true})
+            image.addEventListener('error', function () { if (run === current) hint.textContent = '头像暂时无法加载，将使用默认头像' }, {once: true})
+          })
+          .catch(function () { if (run === current && state === context) hint.textContent = '头像暂时无法加载，将使用默认头像；不影响发表评论' })
+          .finally(function () { clearTimeout(timeout) })
+      }, 600)
+    }
+    qq.addEventListener('input', update)
+    nick.addEventListener('input', function () { if (!objectUrl) fillAvatar(avatar, nick.value) })
+    context.disposeAvatar = function () { run++; clearTimeout(timer); if (controller) controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl) }
+    if (qq.value) setTimeout(update, 0)
+    return {label: label, input: qq}
+  }
+
   function buildItem (root, c, isReply) {
     var item = el('div', 'lks-item' + (isReply ? ' lks-item-reply' : ''))
     item.id = 'comment-' + c.id
     item.setAttribute('data-id', String(c.id))
 
     var ava = el('div', 'lks-avatar', (c.nick || '?').trim().charAt(0).toUpperCase())
-    ava.style.background = 'hsl(' + hueOf(c.nick || '') + ', 62%, 62%)'
+    fillAvatar(ava, c.nick, /^\/api\/avatar\/[a-f0-9]{32}$/.test(c.avatar || '') ? API + c.avatar : '')
 
     var main = el('div', 'lks-main')
     var head = el('div', 'lks-item-head')
@@ -468,8 +534,9 @@
   function renderList () {
     var box = state.listBox
     var root = document.getElementById(CONTAINER_ID)
-    box.innerHTML = ''
+    if (!state.comments.length && state.tree) { state.tree.returnForm(false); state.tree.destroy(); state.tree = null; box.replaceChildren() }
     if (!state.comments.length) {
+      box.replaceChildren()
       var empty = el('div', 'lks-empty')
       var emptyIcon = el('span', 'lks-empty-icon')
       emptyIcon.innerHTML = '<i class="fas fa-comments" aria-hidden="true"></i>'
@@ -485,26 +552,162 @@
       box.appendChild(empty)
       return
     }
-    // API 按新到旧返回；把同一串对话放在一起，根评论在前，回复接在下面。
-    var groups = []
-    var byId = Object.create(null)
-    state.comments.forEach(function (c) {
-      var key = String(c.rid || c.id)
-      if (!byId[key]) {
-        byId[key] = { root: null, replies: [] }
-        groups.push(byId[key])
-      }
-      if (c.pid) byId[key].replies.push(c)
-      else byId[key].root = c
-    })
-    groups.forEach(function (group) {
-      var thread = el('div', 'lks-thread')
-      if (group.root) thread.appendChild(buildItem(root, group.root, false))
-      group.replies.slice().reverse().forEach(function (c) {
-        thread.appendChild(buildItem(root, c, !!group.root))
+    box.querySelectorAll(':scope > .lks-empty').forEach(function (n) { n.remove() })
+    if (!state.tree) state.tree = createCommentTree(root, box, state)
+    state.tree.sync(); state.treeTools.hidden = !state.comments.some(function (c) { return !!c.pid })
+  }
+
+  // Persistent nodes preserve inline drafts and focus while branches animate.
+  function createCommentTree (root, box, context) {
+    var ns = 'http://www.w3.org/2000/svg', records = new Map(), jobs = new Map(), frame = 0, highlighted = 0, initialized = false
+    var narrow = matchMedia('(max-width:520px)'), reduce = matchMedia('(prefers-reduced-motion: reduce)')
+    var wires = document.createElementNS(ns, 'svg'); wires.classList.add('lks-tree-wires'); wires.setAttribute('aria-hidden', 'true'); box.append(wires)
+    box.classList.add('lks-tree')
+    function reduced () { return reduce.matches || document.documentElement.classList.contains('lks-motion-off') }
+    function limit (rec) { return rec.parent ? 1 : narrow.matches || context.path === '/music/' ? 1 : 2 }
+    function children (rec) { return rec.children || [] }
+    function descendants (rec) { var stack = children(rec).slice(), seen = new Set(); while (stack.length) { var n = stack.pop(); if (seen.has(n.c.id)) continue; seen.add(n.c.id); stack.push.apply(stack, children(n)) } return seen.size }
+    function button (label, action, cls) { var b = el('button', cls || 'lks-op', label); b.type = 'button'; b.addEventListener('click', action); return b }
+    function animate (shell, from, closed, done) {
+      var old = jobs.get(shell); if (old) { old.animation.cancel(); jobs.delete(shell) }
+      shell.hidden = false; shell.inert = closed
+      var target = closed ? 0 : shell.firstElementChild.getBoundingClientRect().height
+      function finish () { shell.style.height = ''; shell.hidden = closed; shell.inert = closed; delete shell.dataset.treeMotion; if (done) done(); schedule() }
+      if (reduced() || !root.getClientRects().length || Math.abs(from - target) < 1) { finish(); return }
+      shell.style.height = from + 'px'; shell.dataset.treeMotion = closed ? 'collapse' : 'expand'
+      var a = shell.animate([{height: from + 'px', opacity: closed ? 1 : .5}, {height: target + 'px', opacity: closed ? 0 : 1}], {duration: 220, easing: 'cubic-bezier(.22,.7,.2,1)'})
+      var job = {animation: a, finish: finish}; jobs.set(shell, job); schedule()
+      a.finished.catch(function () {}).finally(function () { if (jobs.get(shell) !== job) return; jobs.delete(shell); finish() })
+    }
+    function update (rec, motion) {
+      if (!rec.shell) return
+      var from = rec.shell.hidden ? 0 : rec.shell.getBoundingClientRect().height
+      var old = jobs.get(rec.shell); if (old) { old.animation.cancel(); jobs.delete(rec.shell) }
+      var shown = Math.min(rec.limit, rec.children.length)
+      rec.children.forEach(function (child, i) {
+        var fresh = child.node.hidden && i < shown; child.node.hidden = i >= shown
+        if (fresh && motion && rec.open && !reduced()) child.item.animate([{opacity: 0, transform: 'translateY(5px)'}, {opacity: 1, transform: 'none'}], {duration: 180})
       })
-      box.appendChild(thread)
-    })
+      var remaining = rec.children.length - shown
+      rec.more.hidden = !remaining; rec.more.textContent = '再看 ' + Math.min(3, remaining) + ' 条回复' + (remaining > 3 ? ' · 还有 ' + remaining + ' 条' : '')
+      rec.less.hidden = shown <= limit(rec)
+      rec.toggle.textContent = rec.open ? '收起回复' : '展开 ' + descendants(rec) + ' 条回复'
+      ;[rec.toggle, rec.rail].forEach(function (b) { b.setAttribute('aria-expanded', String(rec.open)) })
+      rec.rail.textContent = rec.open ? '−' : '+'; rec.rail.setAttribute('aria-label', (rec.open ? '收起' : '展开') + ' @' + rec.c.nick + ' 的回复')
+      rec.shell.setAttribute('aria-hidden', String(!rec.open))
+      if (motion) animate(rec.shell, from, !rec.open)
+      else { rec.shell.style.height = ''; rec.shell.hidden = !rec.open; rec.shell.inert = !rec.open; delete rec.shell.dataset.treeMotion }
+      schedule()
+    }
+    function toggle (rec, source) {
+      rec.open = !rec.open
+      if (!rec.open && rec.shell.contains(document.activeElement)) source.focus({preventScroll: true})
+      update(rec, true); highlighted = rec.c.id
+    }
+    function addBranch (rec) {
+      if (rec.shell) return
+      rec.shell = el('div', 'lks-branch-shell'); rec.shell.id = 'comment-branch-' + rec.c.id
+      rec.inner = el('div', 'lks-branch-inner'); rec.list = el('div', 'lks-tree-children'); rec.controls = el('div', 'lks-branch-tools')
+      rec.more = button('', function () { rec.open = true; rec.limit += 3; update(rec, true); if (rec.more.hidden) rec.toggle.focus({preventScroll: true}) })
+      rec.less = button('恢复默认', function () { rec.limit = limit(rec); update(rec, true); rec.toggle.focus({preventScroll: true}) })
+      rec.controls.append(rec.more, rec.less); rec.inner.append(rec.list, rec.controls); rec.shell.append(rec.inner); rec.node.append(rec.shell)
+      rec.toggle = button('', function () { toggle(rec, rec.toggle) }); rec.toggle.dataset.branchToggle = rec.c.id
+      rec.rail = button('+', function () { toggle(rec, rec.rail) }, 'lks-rail-toggle'); rec.rail.dataset.railId = rec.c.id
+      ;[rec.toggle, rec.rail].forEach(function (b) { b.setAttribute('aria-controls', rec.shell.id) })
+      rec.item.querySelector('.lks-item-ops').append(rec.toggle); rec.item.append(rec.rail)
+    }
+    function mount (c) {
+      var rec = records.get(c.id); if (rec) { rec.c = c; return rec }
+      var node = el('div', 'lks-tree-node'), item = buildItem(root, c, !!c.pid)
+      node.dataset.nodeId = c.id; node.append(item)
+      rec = {c: c, node: node, item: item, avatar: item.querySelector('.lks-avatar'), children: [], parent: null, open: false, limit: 1}; records.set(c.id, rec); return rec
+    }
+    function sync () {
+      var ids = new Set(context.comments.map(function (c) { return c.id }))
+      records.forEach(function (rec, id) { if (!ids.has(id)) { if (rec.node.contains(context.form)) returnForm(false); rec.node.remove(); records.delete(id) } })
+      context.comments.forEach(mount)
+      records.forEach(function (rec) { rec.children = []; rec.parent = null })
+      records.forEach(function (rec) {
+        var parent = rec.c.pid && records.get(rec.c.pid)
+        if (!parent && rec.c.rid !== rec.c.id) parent = records.get(rec.c.rid)
+        var p = parent, seen = new Set([rec.c.id]); while (p) { if (seen.has(p.c.id)) { parent = null; break } seen.add(p.c.id); p = p.c.pid && records.get(p.c.pid) }
+        if (parent) { rec.parent = parent; parent.children.push(rec) }
+        rec.node.classList.toggle('lks-thread', !rec.parent)
+      })
+      var roots = Array.from(records.values()).filter(function (r) { return !r.parent }).sort(function (a, b) { return (context.order === 'earliest' ? 1 : -1) * (a.c.created_at - b.c.created_at || a.c.id - b.c.id) })
+      if (!initialized && roots.length) { roots[0].open = true; initialized = true }
+      records.forEach(function (rec) {
+        if (!rec.configured) { rec.limit = limit(rec); rec.configured = true }
+        if (rec.children.length) addBranch(rec)
+        rec.children.sort(function (a, b) { return a.c.created_at - b.c.created_at || a.c.id - b.c.id })
+        rec.children.forEach(function (child) { if (child.node.parentNode !== rec.list) rec.list.append(child.node) })
+        if (rec.toggle) { rec.toggle.hidden = !rec.children.length; rec.rail.hidden = !rec.children.length }
+      })
+      roots.forEach(function (rec) { box.append(rec.node); rec.node.hidden = false })
+      // Parent nodes are updated after their descendants, for accurate animation measurements.
+      Array.from(records.values()).reverse().forEach(function (rec) { update(rec, false) })
+      if (context.replyTo) attachForm(context.replyTo.id, false)
+      schedule()
+    }
+    function reveal (id) {
+      var rec = records.get(Number(id)), child = rec, seen = new Set()
+      while (child && child.parent && !seen.has(child.c.id)) { seen.add(child.c.id); var p = child.parent; p.open = true; p.limit = Math.max(p.limit, p.children.indexOf(child) + 1); update(p, false); child = p }
+      schedule(); return rec
+    }
+    function attachForm (id, motion) {
+      var rec = reveal(id); if (!rec || !context.form) return
+      if (!rec.editor) { rec.editor = el('div', 'lks-inline-shell'); rec.editor.append(el('div', 'lks-inline-inner')); rec.item.querySelector('.lks-main').append(rec.editor) }
+      var inner = rec.editor.firstElementChild
+      if (inner.contains(context.form)) return
+      var previous = context.form.closest('.lks-inline-shell')
+      inner.append(context.form); if (previous) { previous.hidden = true; previous.inert = true }
+      if (motion !== false) animate(rec.editor, 0, false); else { rec.editor.hidden = false; rec.editor.inert = false }
+      context.form.classList.add('is-inline'); schedule()
+    }
+    function returnForm (motion) {
+      var form = context.form, previous = form && form.closest('.lks-inline-shell')
+      if (!form || !context.formHome) return
+      function move () { if (previous && form.closest('.lks-inline-shell') !== previous) return; context.formHome.append(form); form.classList.remove('is-inline') }
+      if (previous && motion) animate(previous, previous.getBoundingClientRect().height, true, move)
+      else { move(); if (previous) { previous.hidden = true; previous.inert = true } }
+      schedule()
+    }
+    function bulk (open) {
+      records.forEach(function (rec) { if (!rec.parent && rec.shell) { rec.open = open; rec.limit = limit(rec); update(rec, true) } else if (rec.shell) { rec.open = false; rec.limit = limit(rec); update(rec, false) } }); schedule()
+    }
+    function draw () {
+      if (!root.isConnected || !box.getClientRects().length) return
+      var bounds = box.getBoundingClientRect(); wires.setAttribute('width', bounds.width); wires.setAttribute('height', bounds.height); wires.setAttribute('viewBox', '0 0 ' + bounds.width + ' ' + Math.max(1, bounds.height)); wires.replaceChildren()
+      function path (d, rec, child, x, y) { var p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); p.dataset.parentId = rec.c.id; if (child) { p.dataset.childId = child.c.id; p.dataset.endX = x; p.dataset.endY = y } p.classList.toggle('is-active', highlighted === rec.c.id); wires.append(p) }
+      records.forEach(function (rec) {
+        if (!rec.shell || !rec.children.length || !rec.avatar.getClientRects().length) return
+        var clip = Infinity; for (var n = rec.node.parentElement; n && n !== box; n = n.parentElement) if (n.classList.contains('lks-branch-shell')) clip = n.hidden ? -Infinity : Math.min(clip, n.getBoundingClientRect().bottom)
+        var a = rec.avatar.getBoundingClientRect(); if (a.top >= clip) return
+        var item = rec.item.getBoundingClientRect(), ops = rec.item.querySelector('.lks-item-ops').getBoundingClientRect(), x = a.left + a.width / 2 - bounds.left, start = a.bottom + 3 - bounds.top
+        var cy = Math.max(a.bottom + 13, ops.top + ops.height / 2) - bounds.top, end = cy + 8
+        rec.rail.style.left = (x + bounds.left - item.left - 11) + 'px'; rec.rail.style.top = (cy + bounds.top - item.top - 11) + 'px'
+        if (!rec.shell.hidden) { var bottom = Math.min(clip, rec.shell.getBoundingClientRect().bottom) - bounds.top
+          rec.children.forEach(function (child) { if (child.node.hidden || !child.avatar.getClientRects().length) return; var r = child.avatar.getBoundingClientRect(), yy = r.top + r.height / 2 - bounds.top, xx = r.left - bounds.left - 3
+            if (xx <= x || yy < start) return
+            if (yy > bottom) { end = Math.max(end, bottom); return }
+            var radius = Math.max(0, Math.min(11, (xx - x) / 2, yy - start)); end = Math.max(end, yy - radius); path('M ' + x + ' ' + (yy - radius) + ' Q ' + x + ' ' + yy + ' ' + (x + radius) + ' ' + yy + ' H ' + xx, rec, child, xx, yy)
+          })
+        }
+        end = Math.min(end, clip - bounds.top); if (end > start) path('M ' + x + ' ' + start + ' V ' + end, rec)
+      })
+    }
+    function tick () { frame = 0; if (!root.isConnected) return; draw(); if (jobs.size) frame = requestAnimationFrame(tick) }
+    function schedule () { if (!frame) frame = requestAnimationFrame(tick) }
+    var observer = new ResizeObserver(schedule); observer.observe(box)
+    var visibility = new MutationObserver(function () { if (reduced()) finishJobs(); schedule() }); visibility.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
+    function finishJobs () { jobs.forEach(function (job) { job.animation.cancel(); job.finish() }); jobs.clear() }
+    function resized () { records.forEach(function (rec) { rec.limit = Math.min(rec.limit, limit(rec)); update(rec, false) }); schedule() }
+    function onReduce () { if (reduced()) finishJobs() }
+    narrow.addEventListener('change', resized); reduce.addEventListener('change', onReduce)
+    box.addEventListener('pointerover', function (e) { var n = e.target.closest('.lks-tree-node'); highlighted = n ? Number(n.dataset.nodeId) : 0; schedule() })
+    box.addEventListener('pointerleave', function () { highlighted = 0; schedule() })
+    box.addEventListener('focusin', function (e) { var n = e.target.closest('.lks-tree-node'); highlighted = n ? Number(n.dataset.nodeId) : 0; schedule() })
+    return {sync: sync, reveal: reveal, attachForm: attachForm, returnForm: returnForm, bulk: bulk, destroy: function () { observer.disconnect(); visibility.disconnect(); narrow.removeEventListener('change', resized); reduce.removeEventListener('change', onReduce); jobs.forEach(function (j) { j.animation.cancel() }); jobs.clear(); cancelAnimationFrame(frame) }}
   }
 
   function active (context, root) {
@@ -548,6 +751,7 @@
         if (!current()) return
         var node = document.getElementById('comment-' + match[1])
         if (!node) return
+        if (context.tree) context.tree.reveal(Number(match[1]))
         node.tabIndex = -1
         node.focus({preventScroll: true})
         node.scrollIntoView({block: 'center', behavior: document.documentElement.classList.contains('lks-motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'})
@@ -571,6 +775,7 @@
 
   function clearReply () {
     state.replyTo = null
+    if (state.tree) state.tree.returnForm(true)
     if (state.replyBar) state.replyBar.style.display = 'none'
     if (state.contentEl) state.contentEl.placeholder = state.contentPlaceholder
     if (state.markDraft) state.markDraft()
@@ -586,11 +791,12 @@
         var cancel = el('button', 'lks-op', '取消')
         cancel.type = 'button'
         cancel.addEventListener('click', function () {
-          clearReply()
+          clearReply(); var target = document.querySelector('#comment-' + c.id + ' .lks-item-ops button'); if (target) target.focus({preventScroll:true})
         })
         return cancel
       })()
     )
+    if (state.tree) state.tree.attachForm(c.id, focus !== false)
     if (state.markDraft && focus !== false) state.markDraft()
     var ta = root.querySelector('.lks-textarea') || state.contentEl
     if (ta) {
@@ -631,6 +837,7 @@
     var payload = {
       path: state.path,
       nick: nick,
+      qq: fields.qq.value.trim(),
       mail: fields.mail.value.trim(),
       link: fields.link.value.trim(),
       content: content,
@@ -652,7 +859,7 @@
       body: JSON.stringify(payload)
     })
       .then(function (data) {
-        saveMeta({ nick: nick, mail: payload.mail, link: payload.link })
+        saveMeta({ nick: nick, qq: payload.qq, mail: payload.mail, link: payload.link })
         forgetSubmittedDraft(payload.path, sentText, sentAt)
         if (!active(context, root)) return
         if (fields.content.value === sentText) {
@@ -663,9 +870,11 @@
         if (data.pending) {
           setMsg('已提交，等站长审核后就会显示 ✅', 'ok')
         } else if (data.comment) {
+          if (state.tree && data.comment.pid) state.tree.reveal(data.comment.pid)
           state.comments.unshift(data.comment)
           state.total += 1
           renderList()
+          if (state.tree) state.tree.reveal(data.comment.id)
           updateHeadline()
           setMsg('发表成功 🎉', 'ok')
         }
@@ -683,12 +892,13 @@
     if (context.loading) return context.pending
     var page = append ? context.page + 1 : 1
     context.loading = true; context.failed = false
+    root.querySelectorAll('.lks-list-order button').forEach(function (b) { b.disabled = true })
     context.retryBtn.hidden = true
     context.listStatusEl.classList.add('is-loading')
     context.listStatusTextEl.textContent = append ? '' : (context.path === '/comments/' ? '正在加载留言…' : '正在加载评论…')
     context.moreBtn.disabled = true
     context.moreBtn.textContent = '加载中…'
-    context.pending = api('/api/comments?path=' + encodeURIComponent(context.path) + '&page=' + page + '&pageSize=' + PAGE_SIZE)
+    context.pending = api('/api/comments?path=' + encodeURIComponent(context.path) + '&page=' + page + '&pageSize=' + PAGE_SIZE + '&view=threads&order=' + (context.order || 'latest'))
       .then(function (data) {
         if (!active(context, root)) return false
         context.total = data.total
@@ -716,6 +926,7 @@
         context.loading = false
         if (active(context, root)) {
           context.listStatusEl.classList.remove('is-loading')
+          root.querySelectorAll('.lks-list-order button').forEach(function (b) { b.disabled = false })
           context.moreBtn.disabled = false
           context.moreBtn.textContent = '加载更多'
         }
@@ -732,13 +943,15 @@
 
   function init () {
     var root = document.getElementById(CONTAINER_ID)
-    if (!root) return
+    if (!root) { if (state.tree) { state.tree.destroy(); state.tree = null } if (state.disposeAvatar) state.disposeAvatar(); return }
     var path = currentPath()
     if (root.getAttribute('data-path') === path) { locateTarget(root); return }   // pjax 后同页不重复初始化
     root.setAttribute('data-path', path)
     flushDraft()
+    if (state.tree) state.tree.destroy()
+    if (state.disposeAvatar) state.disposeAvatar()
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css?v=20261025-comfort-1')
+    loadCSS('/css/comment.css?v=20261101-thread-qq-1')
     render(root)
     updateHeadline()
     load(root, false).then(function () { locateTarget(root) })
