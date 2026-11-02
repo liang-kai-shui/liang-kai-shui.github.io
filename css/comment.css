@@ -874,3 +874,5 @@ body[data-page-type='music'] .lks-list-head { margin-top: 18px; }
 @media(pointer:coarse){#post-comment .lks-op{min-height:40px;padding:8px}#post-comment .lks-item-ops{gap:8px}#post-comment .lks-rail-toggle::after{inset:-11px}}
 @media(prefers-reduced-motion:reduce){#post-comment .lks-op,#post-comment .lks-tree-wires path,#post-comment .lks-rail-toggle{transition:none}}
 .lks-motion-off #post-comment .lks-op,.lks-motion-off #post-comment .lks-tree-wires path,.lks-motion-off #post-comment .lks-rail-toggle{transition:none}
+
+.lks-owner-badge{font-size:10px;line-height:1.6;padding:1px 6px;border-radius:4px;background:var(--lks-soft);color:var(--lks-accent);font-weight:600;white-space:nowrap}

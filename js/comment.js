@@ -482,6 +482,7 @@
     if (c.link) { name.href = c.link; name.target = '_blank'; name.rel = 'noopener nofollow' }
     var time = el('span', 'lks-time', relativeTime(c.created_at))
     head.appendChild(name)
+    if (c.is_admin === true) head.appendChild(el('span', 'lks-owner-badge', '站长'))
     if (c.pid) {
       var target = findComment(c.pid)
       head.appendChild(el('span', 'lks-at', '回复 ' + (target ? '@' + target.nick : '某条评论')))
@@ -951,7 +952,7 @@
     if (state.tree) state.tree.destroy()
     if (state.disposeAvatar) state.disposeAvatar()
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css?v=20261101-thread-qq-2')
+    loadCSS('/css/comment.css?v=20261102-admin-owner-1')
     render(root)
     updateHeadline()
     load(root, false).then(function () { locateTarget(root) })
