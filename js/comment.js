@@ -157,17 +157,18 @@
   /* ----------------------------- 网络 ----------------------------- */
 
   function api (path, options) {
-    return fetch(API + path, options).then(function (res) {
-      return res.json().catch(function () { return {} }).then(function (body) {
-        if (!res.ok || body.ok === false) {
-          var err = new Error(body.error || ('请求失败（' + res.status + '）'))
-          err.status = res.status
-          throw err
-        }
-        return body.data
-      })
-    })
+    options=options||{};var controller=new AbortController(),timedOut=false,timer=setTimeout(function(){timedOut=true;controller.abort()},options.method==='POST'?25000:15000);
+    return fetch(API+path,Object.assign({},options,{signal:controller.signal})).then(function(res){return res.json().catch(function(){return {}}).then(function(body){if(!res.ok||body.ok===false){var err=new Error(body.error||('请求失败（'+res.status+'）'));err.status=res.status;throw err}return body.data})}).catch(function(err){if(timedOut)throw new Error(options.method==='POST'?'发送超时，结果尚未确认；草稿已保留，可重试确认，编号相同不会重复发布。':'读取超时，请重试');if(err instanceof TypeError)throw new Error('连接中断，结果尚未确认；草稿已保留，可重试确认。');throw err}).finally(function(){clearTimeout(timer)});
   }
+  var pendingAttempts={};
+  function attemptRows(){try{var rows=JSON.parse(localStorage.getItem('lks-comment-attempts')||'[]');return Array.isArray(rows)?rows.filter(function(r){return r&&r.time>Date.now()-7*86400000}).slice(-30):[]}catch(e){return []}}
+  function storeAttempts(rows){try{localStorage.setItem('lks-comment-attempts',JSON.stringify(rows))}catch(e){}}
+  async function commentRequestId(payload){
+    var bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([payload.path,payload.nick,payload.qq,payload.mail,payload.link,payload.content,payload.pid||null])));
+    var hash=Array.from(new Uint8Array(bytes),function(v){return v.toString(16).padStart(2,'0')}).join(''),rows=attemptRows(),old=rows.find(function(r){return r.hash===hash});
+    if(old)return old.id;if(pendingAttempts[hash])return pendingAttempts[hash];var id=crypto.randomUUID();pendingAttempts[hash]=id;rows.push({hash:hash,id:id,time:Date.now()});storeAttempts(rows.slice(-30));return id;
+  }
+  function finishCommentRequest(id){storeAttempts(attemptRows().filter(function(r){return r.id!==id}));Object.keys(pendingAttempts).forEach(function(k){if(pendingAttempts[k]===id)delete pendingAttempts[k]})}
 
   /* ----------------------------- 渲染 ----------------------------- */
 
@@ -827,7 +828,7 @@
       })
   }
 
-  function submitComment (root, fields) {
+  async function submitComment (root, fields) {
     if (fields.submit.disabled) return
     var nick = fields.nick.value.trim()
     var content = fields.content.value.trim()
@@ -854,6 +855,7 @@
     var context = state, sentText = fields.content.value, sentAt = Date.now()
     fields.submit.disabled = true
     setMsg('发送中…')
+    try{payload.requestId=await commentRequestId(payload)}catch(e){fields.submit.disabled=false;setMsg('无法生成发送编号，草稿已保留，请刷新后重试。','err');return}
     api('/api/comments', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -861,9 +863,10 @@
     })
       .then(function (data) {
         saveMeta({ nick: nick, qq: payload.qq, mail: payload.mail, link: payload.link })
+        finishCommentRequest(payload.requestId)
         forgetSubmittedDraft(payload.path, sentText, sentAt)
         if (!active(context, root)) return
-        if (fields.content.value === sentText) {
+        if (fields.content.value === sentText && (context.replyTo ? context.replyTo.id : null) === (payload.pid || null)) {
           fields.content.value = ''
           fields.content.dispatchEvent(new Event('input', { bubbles: true }))
           clearReply(); flushDraft()
@@ -872,8 +875,7 @@
           setMsg('已提交，等站长审核后就会显示 ✅', 'ok')
         } else if (data.comment) {
           if (state.tree && data.comment.pid) state.tree.reveal(data.comment.pid)
-          state.comments.unshift(data.comment)
-          state.total += 1
+          if(!state.comments.some(function(c){return c.id===data.comment.id})){state.comments.unshift(data.comment);state.total += 1}
           renderList()
           if (state.tree) state.tree.reveal(data.comment.id)
           updateHeadline()
@@ -952,7 +954,7 @@
     if (state.tree) state.tree.destroy()
     if (state.disposeAvatar) state.disposeAvatar()
     state = { path: path, page: 1, total: 0, comments: [], replyTo: null, loading: false }
-    loadCSS('/css/comment.css?v=20261102-admin-owner-1')
+    loadCSS('/css/comment.css?v=20261102-reliable-comments-1')
     render(root)
     updateHeadline()
     load(root, false).then(function () { locateTarget(root) })

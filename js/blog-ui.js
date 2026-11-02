@@ -99,7 +99,7 @@
     if (!category) {
       home.original.forEach(function (node) { items.appendChild(node) })
     } else {
-      var posts = payload.posts.filter(function (post) { return post.categories.indexOf(category) !== -1 })
+      var posts = payload.posts.filter(function (post) { var aliases={教程:['73cab218'],站点:['8b8a8c83'],折腾记录:['ee8c1180','699135a0','2b24fb08','bebfd6e3','b6b01a47','93fdbfcd','4ce3e802','6d19d5ca','2dddc10c','8f211f34']}; return post.categories.indexOf(category) !== -1 || !!(aliases[category] && aliases[category].some(function(id){return post.url.indexOf('/'+id+'.html')!==-1})) })
       status.appendChild(element('span', '', category + ' · ' + posts.length + ' 篇文章'))
       var clear = element('button', 'lks-filter-clear', '查看全部')
       clear.type = 'button'
