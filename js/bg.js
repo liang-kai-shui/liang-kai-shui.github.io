@@ -173,8 +173,10 @@
   function applyBackground (url) {
     var bg = document.getElementById('web_bg')
     if (!bg) return false
-    if (window.lksSurfaceMotion) window.lksSurfaceMotion.background(bg, url)
-    else bg.style.backgroundImage = 'url("' + url + '")'
+    var meta = (window.__lksBackgrounds || []).find(function (row) { return row.original === url || row.desktop === url || row.mobile === url })
+    var position = meta && !isMobile() ? Math.round((meta.focus == null ? .5 : meta.focus) * 100) + '% 50%' : '50% 50%'
+    if (window.lksSurfaceMotion) window.lksSurfaceMotion.background(bg, url, position)
+    else { bg.style.backgroundImage = 'url("' + url + '")'; bg.style.backgroundPosition = position }
     var early = document.getElementById('lks-initial-bg-style'); if (early) early.remove()
     var video = document.getElementById(VIDEO_ID)
     discardVideo(video)
