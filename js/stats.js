@@ -98,17 +98,102 @@
     } catch (e) { /* 隐私模式忽略 */ }
   }
 
+  /* ------------------- 访客设备信息（仅后台可见） ------------------- */
+
+  function readClientDetails () {
+    var d = {}
+    try {
+      var cpu = Number(navigator.hardwareConcurrency)
+      if (cpu > 0 && cpu <= 256) d.cpu = Math.floor(cpu)
+    } catch (e) {}
+    try {
+      var memory = Number(navigator.deviceMemory)
+      if (memory > 0 && memory <= 1024) d.memory = memory
+    } catch (e) {}
+    try {
+      if (screen) {
+        d.screenWidth = screen.width
+        d.screenHeight = screen.height
+        d.availWidth = screen.availWidth
+        d.availHeight = screen.availHeight
+        d.colorDepth = screen.colorDepth
+      }
+      d.viewportWidth = innerWidth
+      d.viewportHeight = innerHeight
+      d.dpr = devicePixelRatio
+    } catch (e) {}
+    try {
+      var zone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      if (zone) d.timezone = String(zone).slice(0, 64)
+      d.timezoneOffset = new Date().getTimezoneOffset()
+    } catch (e) {}
+    try { d.language = navigator.language || '' } catch (e) {}
+    try { d.platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '' } catch (e) {}
+    try { d.touchPoints = Math.max(0, Number(navigator.maxTouchPoints) || 0) } catch (e) {}
+    try { d.reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches } catch (e) {}
+    try {
+      var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection
+      if (c) {
+        if (c.type) d.connectionType = String(c.type).slice(0, 32)
+        if (c.effectiveType) d.effectiveType = String(c.effectiveType).slice(0, 16)
+        if (Number.isFinite(c.downlink)) d.downlink = c.downlink
+        if (Number.isFinite(c.rtt)) d.rtt = c.rtt
+        if (typeof c.saveData === 'boolean') d.saveData = c.saveData
+      }
+    } catch (e) {}
+    try {
+      var canvas = document.createElement('canvas')
+      var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+      if (gl) {
+        var ext = gl.getExtension('WEBGL_debug_renderer_info')
+        var renderer = gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER)
+        var vendor = gl.getParameter(ext ? ext.UNMASKED_VENDOR_WEBGL : gl.VENDOR)
+        if (renderer) d.gpu = String(renderer).slice(0, 160)
+        if (vendor) d.gpuVendor = String(vendor).slice(0, 80)
+      }
+    } catch (e) {}
+    return d
+  }
+
+  function collectClientDetails () {
+    var details = readClientDetails()
+    return new Promise(function (resolve) {
+      var done = false
+      function finish () {
+        if (done) return
+        done = true
+        resolve(details)
+      }
+      var timer = setTimeout(finish, 650)
+      try {
+        if (!navigator.getBattery) { clearTimeout(timer); finish(); return }
+        navigator.getBattery().then(function (battery) {
+          try {
+            details.batteryLevel = Math.max(0, Math.min(1, Number(battery.level)))
+            details.batteryCharging = !!battery.charging
+          } catch (e) {}
+          clearTimeout(timer)
+          finish()
+        }, function () { clearTimeout(timer); finish() })
+      } catch (e) { clearTimeout(timer); finish() }
+    })
+  }
+
   /* ------------------------- 浏览量 ------------------------- */
 
   function countView () {
     var path = currentPath()
     var referrerHost = ''
     try { if (document.referrer) referrerHost = new URL(document.referrer).hostname } catch (e) {}
-    (window.LKS_PREVIEW ? api('/api/pv?paths=' + encodeURIComponent(path)).then(function (data) { var row = data[path]; return { views: typeof row === 'number' ? row : row && row.views || 0 } }) : api('/api/pv', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ path: path, referrerHost: referrerHost })
-    }))
+    var client = window.LKS_PREVIEW ? null : collectClientDetails()
+    Promise.resolve(client).then(function (details) {
+      return (window.LKS_PREVIEW ? api('/api/pv?paths=' + encodeURIComponent(path)).then(function (data) { var row = data[path]; return { views: typeof row === 'number' ? row : row && row.views || 0 } }) : api('/api/pv', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({ path: path, referrerHost: referrerHost, client: details })
+      }))
+    })
       .then(function (data) { fill('busuanzi_value_page_pv', data.views) })
       .catch(function (err) {
         console.warn('[stats] 记录浏览失败：', err.message)
