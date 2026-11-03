@@ -132,6 +132,21 @@
     try { d.touchPoints = Math.max(0, Number(navigator.maxTouchPoints) || 0) } catch (e) {}
     try { d.reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches } catch (e) {}
     try {
+      d.colorScheme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      d.contrast = matchMedia('(prefers-contrast: more)').matches ? 'more' : matchMedia('(prefers-contrast: less)').matches ? 'less' : 'no-preference'
+      d.forcedColors = matchMedia('(forced-colors: active)').matches ? 'active' : 'none'
+      d.colorGamut = matchMedia('(color-gamut: rec2020)').matches ? 'rec2020' : matchMedia('(color-gamut: p3)').matches ? 'p3' : 'srgb'
+      d.dynamicRange = matchMedia('(dynamic-range: high)').matches ? 'high' : 'standard'
+      d.reducedTransparency = matchMedia('(prefers-reduced-transparency: reduce)').matches ? 'reduce' : 'no-preference'
+    } catch (e) {}
+    try {
+      var ua = navigator.userAgentData
+      if (ua) {
+        if (typeof ua.mobile === 'boolean') d.uaMobile = ua.mobile
+        if (ua.brands && ua.brands.length) d.uaBrands = ua.brands.map(function (item) { return item.brand + (item.version ? ' ' + item.version : '') }).join(', ').slice(0, 160)
+      }
+    } catch (e) {}
+    try {
       var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection
       if (c) {
         if (c.type) d.connectionType = String(c.type).slice(0, 32)
@@ -158,24 +173,41 @@
   function collectClientDetails () {
     var details = readClientDetails()
     return new Promise(function (resolve) {
-      var done = false
+      var done = false, pending = 0
       function finish () {
         if (done) return
         done = true
+        clearTimeout(timer)
         resolve(details)
       }
-      var timer = setTimeout(finish, 650)
+      var timer = setTimeout(finish, 750)
+      function oneDone () { pending -= 1; if (pending <= 0) finish() }
+      function track (promise) { if (!promise) return; pending += 1; promise.then(oneDone, oneDone) }
       try {
-        if (!navigator.getBattery) { clearTimeout(timer); finish(); return }
-        navigator.getBattery().then(function (battery) {
-          try {
-            details.batteryLevel = Math.max(0, Math.min(1, Number(battery.level)))
-            details.batteryCharging = !!battery.charging
-          } catch (e) {}
-          clearTimeout(timer)
-          finish()
-        }, function () { clearTimeout(timer); finish() })
-      } catch (e) { clearTimeout(timer); finish() }
+        var ua = navigator.userAgentData
+        if (ua && typeof ua.getHighEntropyValues === 'function') {
+          track(ua.getHighEntropyValues(['architecture', 'bitness', 'model', 'platformVersion', 'uaFullVersion', 'wow64', 'formFactors']).then(function (values) {
+            if (values.architecture) details.uaArchitecture = String(values.architecture).slice(0, 32)
+            if (values.bitness) details.uaBitness = String(values.bitness).slice(0, 16)
+            if (values.model) details.uaModel = String(values.model).slice(0, 80)
+            if (values.platformVersion) details.uaPlatformVersion = String(values.platformVersion).slice(0, 64)
+            if (values.uaFullVersion) details.uaFullVersion = String(values.uaFullVersion).slice(0, 64)
+            if (typeof values.wow64 === 'boolean') details.uaWow64 = values.wow64
+            if (Array.isArray(values.formFactors) && values.formFactors.length) details.uaFormFactors = values.formFactors.join(', ').slice(0, 64)
+          }))
+        }
+      } catch (e) {}
+      try {
+        if (navigator.getBattery) {
+          track(navigator.getBattery().then(function (battery) {
+            try {
+              details.batteryLevel = Math.max(0, Math.min(1, Number(battery.level)))
+              details.batteryCharging = !!battery.charging
+            } catch (e) {}
+          }))
+        }
+      } catch (e) {}
+      if (pending <= 0) finish()
     })
   }
 
